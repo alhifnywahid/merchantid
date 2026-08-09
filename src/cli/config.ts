@@ -50,14 +50,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/** Resolve the only supported MerchID CLI configuration path. */
+/** Resolve the only supported MerchantId CLI configuration path. */
 export function resolveConfigPath(): string {
-  const configured = process.env.MERCHID_CONFIG;
+  const configured = process.env.MERCHANTID_CONFIG;
   if (configured?.trim()) return configured;
-  return join(homedir(), ".merchid", "config.json");
+  return join(homedir(), ".merchantid", "config.json");
 }
 
-/** Read and validate the current MerchID configuration schema. */
+/** Read and validate the current MerchantId configuration schema. */
 export function readConfig(path = resolveConfigPath()): CliConfig {
   if (!existsSync(path)) return emptyConfig();
 
@@ -65,19 +65,22 @@ export function readConfig(path = resolveConfigPath()): CliConfig {
   try {
     parsed = JSON.parse(readFileSync(path, "utf8"));
   } catch (cause) {
-    throw new ConfigError("MerchID config is not valid JSON", { path, cause });
+    throw new ConfigError("MerchantId config is not valid JSON", {
+      path,
+      cause,
+    });
   }
 
   if (!isRecord(parsed)) {
-    throw new ConfigError("MerchID config must be a JSON object");
+    throw new ConfigError("MerchantId config must be a JSON object");
   }
   if (parsed.version !== CLI_CONFIG_VERSION) {
     throw new ConfigError(
-      `Unsupported MerchID config version: ${String(parsed.version)}`,
+      `Unsupported MerchantId config version: ${String(parsed.version)}`,
     );
   }
   if (!isRecord(parsed.providers)) {
-    throw new ConfigError("MerchID config providers must be an object");
+    throw new ConfigError("MerchantId config providers must be an object");
   }
 
   return {

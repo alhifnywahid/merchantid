@@ -4,11 +4,11 @@ import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
-// The lab consumes the root package through `merchid: file:../..`, which resolves
+// The lab consumes the root package through `merchantid: file:../..`, which resolves
 // to the sibling `dist/` output at the repository root. `.example/web` has its
 // own lockfile, so Vite treats this folder as the workspace root. Two things are
 // needed for that linked package to load in dev:
-//   1. Externalize `merchid` for SSR so Node imports the built package directly
+//   1. Externalize `merchantid` for SSR so Node imports the built package directly
 //      instead of Vite trying to serve `../../dist/*` through `/@fs/`.
 //   2. Allow the repo root in the dev server file-serving list as a fallback for
 //      any remaining `/@fs/` reads (for example sourcemaps).
@@ -35,7 +35,7 @@ export default defineConfig({
     tsconfigPaths: true,
   },
   ssr: {
-    external: ["merchid"],
+    external: ["merchantid"],
   },
   plugins: [tanstackStart(), tailwindcss(), react()],
 });

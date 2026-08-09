@@ -1,9 +1,9 @@
 /**
- * Typed error hierarchy for MerchID. Every failure surfaced to callers is an
- * instance of {@link MerchIDError}, which keeps error handling predictable.
+ * Typed error hierarchy for MerchantId. Every failure surfaced to callers is an
+ * instance of {@link MerchantIdError}, which keeps error handling predictable.
  */
 
-export type MerchIDErrorCode =
+export type MerchantIdErrorCode =
   | "CONFIG_INVALID"
   | "AUTH_REQUIRED"
   | "AUTH_FAILED"
@@ -13,18 +13,18 @@ export type MerchIDErrorCode =
   | "AMOUNT_POOL_EXHAUSTED"
   | "QRIS_PARSE_ERROR";
 
-export class MerchIDError extends Error {
-  public readonly code: MerchIDErrorCode;
+export class MerchantIdError extends Error {
+  public readonly code: MerchantIdErrorCode;
   public override readonly cause?: unknown;
   public readonly details?: Record<string, unknown>;
 
   constructor(
-    code: MerchIDErrorCode,
+    code: MerchantIdErrorCode,
     message: string,
     options: { cause?: unknown; details?: Record<string, unknown> } = {},
   ) {
     super(message);
-    this.name = "MerchIDError";
+    this.name = "MerchantIdError";
     this.code = code;
     this.cause = options.cause;
     this.details = options.details;
@@ -32,16 +32,16 @@ export class MerchIDError extends Error {
   }
 }
 
-export class ConfigError extends MerchIDError {
+export class ConfigError extends MerchantIdError {
   constructor(message: string, details?: Record<string, unknown>) {
     super("CONFIG_INVALID", message, { details });
     this.name = "ConfigError";
   }
 }
 
-export class AuthError extends MerchIDError {
+export class AuthError extends MerchantIdError {
   constructor(
-    code: Extract<MerchIDErrorCode, "AUTH_REQUIRED" | "AUTH_FAILED">,
+    code: Extract<MerchantIdErrorCode, "AUTH_REQUIRED" | "AUTH_FAILED">,
     message: string,
     options: { cause?: unknown; details?: Record<string, unknown> } = {},
   ) {
@@ -51,7 +51,7 @@ export class AuthError extends MerchIDError {
 }
 
 /** Authentication cannot continue until the caller completes a CAPTCHA. */
-export class CaptchaRequiredError extends MerchIDError {
+export class CaptchaRequiredError extends MerchantIdError {
   constructor(
     message = "CAPTCHA is required to continue authentication",
     details?: Record<string, unknown>,
@@ -61,7 +61,7 @@ export class CaptchaRequiredError extends MerchIDError {
   }
 }
 
-export class HttpError extends MerchIDError {
+export class HttpError extends MerchantIdError {
   public readonly status: number;
   /**
    * The parsed (or raw) response body, for callers that need to inspect a
@@ -91,7 +91,7 @@ export class HttpError extends MerchIDError {
   }
 }
 
-export class ApiError extends MerchIDError {
+export class ApiError extends MerchantIdError {
   public readonly apiCode?: string;
 
   constructor(

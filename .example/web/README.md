@@ -1,9 +1,9 @@
-# MerchID Live Development Lab
+# MerchantId Live Development Lab
 
-Aplikasi TanStack Start + Tailwind CSS untuk menguji package `merchid` dari build lokal sebelum publish npm. Dependency pada `package.json` sengaja tetap memakai:
+Aplikasi TanStack Start + Tailwind CSS untuk menguji package `merchantid` dari build lokal sebelum publish npm. Dependency pada `package.json` sengaja tetap memakai:
 
 ```json
-"merchid": "file:../.."
+"merchantid": "file:../.."
 ```
 
 Login, lifecycle sesi, discovery, QRIS, payment, dan rekonsiliasi karena itu berjalan terhadap build repository saat ini, bukan versi registry.

@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import {
   AuthError,
   GopayProvider,
-  MerchIDError,
+  MerchantIdError,
   SHOPEE_DEVICE_RISK_BLOB,
   ShopeeProvider,
   isValidQrisChecksum,
@@ -13,7 +13,7 @@ import {
   type ShopeeOtpChallenge,
   type ShopeeOtpVerification,
   type ShopeeProviderConfig,
-} from "@copet/merchid";
+} from "merchantid";
 import { renderSVG } from "uqr";
 import type {
   ActionResult,
@@ -85,7 +85,7 @@ export function redactSensitiveText(value: string): string {
 }
 
 function safeErrorMessage(error: unknown): string {
-  if (error instanceof MerchIDError) {
+  if (error instanceof MerchantIdError) {
     return `${error.code}: ${redactSensitiveText(error.message)}`;
   }
   if (error instanceof Error) return redactSensitiveText(error.message);

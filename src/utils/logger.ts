@@ -31,7 +31,7 @@ export function createConsoleLogger(minLevel: LogLevel = "info"): Logger {
     (level: LogLevel) =>
     (message: string, meta?: Record<string, unknown>): void => {
       if (LEVEL_ORDER[level] < threshold) return;
-      const line = `[merchid] ${level.toUpperCase()} ${message}`;
+      const line = `[merchantid] ${level.toUpperCase()} ${message}`;
       if (meta) {
         // eslint-disable-next-line no-console
         console[level === "debug" ? "log" : level](line, meta);

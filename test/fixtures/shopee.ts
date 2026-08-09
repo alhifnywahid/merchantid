@@ -35,7 +35,7 @@ export function syntheticShopeeSession(
 ): ShopeeSession {
   const merchant = {
     id: SHOPEE_MERCHANT_ID,
-    name: "MerchID Dev Merchant",
+    name: "MerchantId Dev Merchant",
     status: 1,
     staffUserId: 90001,
     staffRole: 1,
@@ -64,7 +64,7 @@ export function syntheticShopeeSession(
       { ...merchant },
       {
         id: SHOPEE_MERCHANT_TWO_ID,
-        name: "MerchID Dev Merchant North",
+        name: "MerchantId Dev Merchant North",
         status: 1,
         staffUserId: 90002,
         staffRole: 2,

@@ -1,6 +1,6 @@
-# Development lab `merchid`
+# Development lab `merchantid`
 
-Folder ini berisi aplikasi development lokal yang memakai package root melalui `merchid: file:../..`, bukan package registry npm. Tujuannya menguji source dan artefak build sebelum versi baru dirilis.
+Folder ini berisi aplikasi development lokal yang memakai package root melalui `merchantid: file:../..`, bukan package registry npm. Tujuannya menguji source dan artefak build sebelum versi baru dirilis.
 
 | Folder         | Bentuk                    | Cakupan                                                                                               |
 | -------------- | ------------------------- | ----------------------------------------------------------------------------------------------------- |

@@ -1,14 +1,14 @@
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { samePaymentScope } from "@copet/merchid";
-import type { Payment, PaymentScope, PaymentStore } from "@copet/merchid";
+import { samePaymentScope } from "merchantid";
+import type { Payment, PaymentScope, PaymentStore } from "merchantid";
 import type { ActivityView, ProviderId } from "../lib/lab-types";
 import type {
   SessionState,
   ShopeeSession,
   ShopeeStaticQrisScope,
-} from "@copet/merchid";
+} from "merchantid";
 
 // Anchored to this file, not `process.cwd()`. Deriving it from the working
 // directory meant launching the lab from the repo root wrote real provider
@@ -16,8 +16,8 @@ import type {
 // `.example/web/data/` is ignored by `.example/.gitignore`, so the credentials
 // stay out of git wherever the dev server is started from.
 const APP_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const DATA_DIRECTORY = process.env.MERCHID_LAB_DATA_DIR
-  ? resolve(process.env.MERCHID_LAB_DATA_DIR)
+const DATA_DIRECTORY = process.env.MERCHANTID_LAB_DATA_DIR
+  ? resolve(process.env.MERCHANTID_LAB_DATA_DIR)
   : resolve(APP_ROOT, "data");
 const STATE_FILE = resolve(DATA_DIRECTORY, "lab-state.json");
 const PAYMENT_FILE = resolve(DATA_DIRECTORY, "payments.json");

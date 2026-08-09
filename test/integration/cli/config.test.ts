@@ -23,20 +23,20 @@ let configPath = "";
 let originalConfigEnv: string | undefined;
 
 beforeEach(() => {
-  directory = mkdtempSync(join(tmpdir(), "merchid-config-test-"));
+  directory = mkdtempSync(join(tmpdir(), "merchantid-config-test-"));
   configPath = join(directory, "nested", "config.json");
-  originalConfigEnv = process.env.MERCHID_CONFIG;
+  originalConfigEnv = process.env.MERCHANTID_CONFIG;
 });
 
 afterEach(() => {
-  if (originalConfigEnv === undefined) delete process.env.MERCHID_CONFIG;
-  else process.env.MERCHID_CONFIG = originalConfigEnv;
+  if (originalConfigEnv === undefined) delete process.env.MERCHANTID_CONFIG;
+  else process.env.MERCHANTID_CONFIG = originalConfigEnv;
   rmSync(directory, { recursive: true, force: true });
 });
 
-describe("MerchID CLI config", () => {
-  it("uses only MERCHID_CONFIG as its explicit path override", () => {
-    process.env.MERCHID_CONFIG = configPath;
+describe("MerchantId CLI config", () => {
+  it("uses only MERCHANTID_CONFIG as its explicit path override", () => {
+    process.env.MERCHANTID_CONFIG = configPath;
     expect(resolveConfigPath()).toBe(configPath);
   });
 

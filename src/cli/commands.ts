@@ -204,7 +204,7 @@ async function loginShopee(
   );
   if (!hasShopeeStaticQris(existing, session)) {
     process.stdout.write(
-      "No static QRIS configured for the selected store. Run `merchid set-qris --provider shopee` before creating QR payments.\n",
+      "No static QRIS configured for the selected store. Run `merchantid set-qris --provider shopee` before creating QR payments.\n",
     );
   }
 }
@@ -290,7 +290,7 @@ export function sessionCommand(
   const providerId = resolveConfiguredProvider(config, requestedProvider);
   if (!providerId) {
     process.stdout.write(
-      "No provider session stored. Run `merchid login` first.\n",
+      "No provider session stored. Run `merchantid login` first.\n",
     );
     return;
   }
@@ -301,7 +301,7 @@ export function sessionCommand(
       : config.providers.shopee?.session;
   if (!session) {
     process.stdout.write(
-      `No ${providerId} session stored. Run \`merchid login --provider ${providerId}\` first.\n`,
+      `No ${providerId} session stored. Run \`merchantid login --provider ${providerId}\` first.\n`,
     );
     return;
   }
@@ -367,7 +367,7 @@ export function merchantsCommand(requestedProvider?: string): void {
   const providerId = resolveConfiguredProvider(config, requestedProvider);
   if (!providerId) {
     process.stdout.write(
-      "No provider configured. Run `merchid login` first.\n",
+      "No provider configured. Run `merchantid login` first.\n",
     );
     return;
   }
@@ -453,7 +453,7 @@ export function setStoreCommand(storeId: string): void {
   process.stdout.write(`Default Shopee store set: ${storeId}\n`);
   if (!hasShopeeStaticQris(provider, nextSession)) {
     process.stdout.write(
-      "No static QRIS is bound to this store. Run `merchid set-qris shopee`.\n",
+      "No static QRIS is bound to this store. Run `merchantid set-qris shopee`.\n",
     );
   }
 }
@@ -576,5 +576,5 @@ function chooseKnownId(
 }
 
 function debugEnabled(): boolean {
-  return Boolean(process.env.MERCHID_DEBUG);
+  return Boolean(process.env.MERCHANTID_DEBUG);
 }

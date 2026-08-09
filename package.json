@@ -1,18 +1,18 @@
 {
-  "name": "@copet/merchid",
+  "name": "merchantid",
   "version": "0.1.0",
-  "description": "MerchID - Extensible, zero-runtime-dependency payment toolkit for GoPay and Shopee merchants in Indonesia. Creates dynamic QRIS payments and reconciles provider transaction feeds.",
+  "description": "MerchantId - Extensible, zero-runtime-dependency payment toolkit for GoPay and Shopee merchants in Indonesia. Creates dynamic QRIS payments and reconciles provider transaction feeds.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/alhifnywahid/merchid.git"
+    "url": "git+https://github.com/alhifnywahid/merchantid.git"
   },
   "bugs": {
-    "url": "https://github.com/alhifnywahid/merchid/issues"
+    "url": "https://github.com/alhifnywahid/merchantid/issues"
   },
-  "homepage": "https://github.com/alhifnywahid/merchid#readme",
+  "homepage": "https://github.com/alhifnywahid/merchantid#readme",
   "author": "alhifnywahid",
   "keywords": [
-    "merchid",
+    "merchantid",
     "multi-provider",
     "gopay",
     "gopay-merchant",
@@ -38,7 +38,7 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "merchid": "dist/cli.cjs"
+    "merchantid": "dist/cli.cjs"
   },
   "exports": {
     ".": {

@@ -1,14 +1,14 @@
 # Panduan Kontribusi
 
-Terima kasih sudah berkontribusi ke MerchID.
+Terima kasih sudah berkontribusi ke MerchantId.
 
-MerchID membaca akun merchant dan mencocokkan uang sungguhan ke pesanan. Ambang ketelitiannya lebih tinggi dari proyek biasa: kegagalan bukan hanya tampilan rusak, tetapi pembayaran sah dapat tidak terdeteksi atau dikaitkan ke pesanan yang salah.
+MerchantId membaca akun merchant dan mencocokkan uang sungguhan ke pesanan. Ambang ketelitiannya lebih tinggi dari proyek biasa: kegagalan bukan hanya tampilan rusak, tetapi pembayaran sah dapat tidak terdeteksi atau dikaitkan ke pesanan yang salah.
 
 ## Menyiapkan lingkungan
 
 ```bash
-git clone https://github.com/alhifnywahid/merchid.git
-cd merchid
+git clone https://github.com/alhifnywahid/merchantid.git
+cd merchantid
 npm install
 ```
 
@@ -27,7 +27,7 @@ Lingkungan maintainer utama adalah Windows dengan PowerShell. Gunakan `;` sebaga
 
 ## Development lab lokal
 
-`.example/web` adalah utility TanStack Start multi-provider yang mengambil package root melalui `merchid: file:../..`, bukan registry npm. Gunakan lab untuk menguji login, sesi, discovery, scope, QRIS, payment, cancel, dan rekonsiliasi terhadap build lokal.
+`.example/web` adalah utility TanStack Start multi-provider yang mengambil package root melalui `merchantid: file:../..`, bukan registry npm. Gunakan lab untuk menguji login, sesi, discovery, scope, QRIS, payment, cancel, dan rekonsiliasi terhadap build lokal.
 
 ```powershell
 npm run build
@@ -49,12 +49,12 @@ Regression test website dijalankan terpisah dengan `Set-Location .example/web; n
 Sertakan:
 
 - Provider, langkah reproduksi, dan hasil yang diharapkan
-- Versi `merchid`, Node.js, dan runtime
+- Versi `merchantid`, Node.js, dan runtime
 - Pesan error lengkap beserta `code`
 - Scope provider/account/merchant-store yang sudah disunting
 - Bentuk transaksi yang sudah disunting bila masalah terkait normalisasi atau rekonsiliasi
 
-Jangan sertakan access token, refresh token, cookie, OTP, challenge OTP, QRIS asli, atau isi `~/.merchid/config.json`. Gunakan `merchid session <provider>` tanpa `--reveal` untuk keluaran yang dimask.
+Jangan sertakan access token, refresh token, cookie, OTP, challenge OTP, QRIS asli, atau isi `~/.merchantid/config.json`. Gunakan `merchantid session <provider>` tanpa `--reveal` untuk keluaran yang dimask.
 
 ## Mengajukan provider atau fitur
 
@@ -80,7 +80,7 @@ Adapter baru berada di `src/providers/<provider-id>/`. Gunakan batas berikut:
 2. Implementasikan `TransactionFeed` bila provider memiliki feed native. Adapter bertanggung jawab atas pagination, filter, deduplikasi, status, waktu, serta normalisasi nominal ke rupiah utuh.
 3. Gunakan `PaymentScope` lengkap. Masukkan account id bila tersedia dan gunakan merchant/outlet/store yang benar-benar memiliki feed serta QRIS.
 4. Pakai `PaymentService` dan `PaymentStore` bersama. Jangan menyalin matcher atau alokator ke folder provider.
-5. Biarkan alur autentikasi provider-specific. `MerchID` adalah registry, bukan facade login universal.
+5. Biarkan alur autentikasi provider-specific. `MerchantId` adalah registry, bukan facade login universal.
 6. Ekspor API publik melalui `src/index.ts` dan `src/providers/<provider-id>/index.ts`.
 7. Jangan menambahkan dependency runtime. Gunakan `fetch` global dan primitive Web API.
 
@@ -123,7 +123,7 @@ Untuk bug, test terbaik gagal saat perbaikannya dibalik. Perubahan pada matching
 - Impor relatif memakai ekstensi `.js`, walaupun sumbernya `.ts`.
 - Impor tipe memakai `import type`.
 - Gunakan `Logger`, bukan `console`, di luar CLI dan implementasi console logger.
-- Error yang disurface-kan harus merupakan turunan `MerchIDError` dan memakai code bertipe `MerchIDErrorCode`.
+- Error yang disurface-kan harus merupakan turunan `MerchantIdError` dan memakai code bertipe `MerchantIdErrorCode`.
 
 ## Batas arsitektur
 
@@ -133,7 +133,7 @@ Untuk bug, test terbaik gagal saat perbaikannya dibalik. Perubahan pada matching
 - Node builtin hanya boleh dipakai pada CLI dan playground lokal, bukan jalur library publik.
 - `PaymentService` menerima transaksi provider-neutral dalam rupiah utuh.
 - Adapter memiliki aturan wire, autentikasi, pagination, dan normalisasinya sendiri.
-- `MerchID` hanya mengelola registry provider dan tidak boleh menampung cabang auth GoPay/Shopee.
+- `MerchantId` hanya mengelola registry provider dan tidak boleh menampung cabang auth GoPay/Shopee.
 
 ## Testing
 
@@ -147,7 +147,7 @@ test/
     qris/
     providers/{gopay,shopee}/
   integration/
-    merchid/
+    merchantid/
     cli/
   contract/              public API dan package metadata
   fixtures/              data sintetis buatan tangan

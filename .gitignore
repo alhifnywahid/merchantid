@@ -55,7 +55,7 @@ coverage
 **/.flow/
 
 # Stored credentials: CLI config and the demo lab's persisted sessions.
-.merchid/
+.merchantid/
 .gopay-session.json
 .web-session.json
 config.json

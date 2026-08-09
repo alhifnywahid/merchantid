@@ -11,28 +11,28 @@ import {
   storesCommand,
   whoamiCommand,
 } from "./commands.js";
-import { MerchIDError } from "../core/errors.js";
+import { MerchantIdError } from "../core/errors.js";
 
-const HELP = `merchid - extensible Indonesian merchant payment CLI
+const HELP = `merchantid - extensible Indonesian merchant payment CLI
 
 Usage:
-  merchid login [provider]                  Interactive OTP login
-  merchid session [provider] [--reveal]     Show a masked stored session
-  merchid merchants [provider]              List merchants and outlets/stores
-  merchid stores [provider]                 Alias for provider outlet/store listing
-  merchid whoami                            Show redacted status for all providers
-  merchid set-provider <provider>            Set the default provider
-  merchid set-merchant <id> [--provider id] Set the default GoPay merchant
-  merchid set-store <id>                    Set the default Shopee store
-  merchid set-qris [provider]                Prompt for a static QRIS securely
-  merchid help                              Show this help
+  merchantid login [provider]                  Interactive OTP login
+  merchantid session [provider] [--reveal]     Show a masked stored session
+  merchantid merchants [provider]              List merchants and outlets/stores
+  merchantid stores [provider]                 Alias for provider outlet/store listing
+  merchantid whoami                            Show redacted status for all providers
+  merchantid set-provider <provider>            Set the default provider
+  merchantid set-merchant <id> [--provider id] Set the default GoPay merchant
+  merchantid set-store <id>                    Set the default Shopee store
+  merchantid set-qris [provider]                Prompt for a static QRIS securely
+  merchantid help                              Show this help
 
 Providers:
   gopay, shopee
 
 Config:
-  Defaults to ~/.merchid/config.json.
-  Override with MERCHID_CONFIG. The file contains credentials and must not be committed.
+  Defaults to ~/.merchantid/config.json.
+  Override with MERCHANTID_CONFIG. The file contains credentials and must not be committed.
 `;
 
 interface ParsedArguments {
@@ -116,7 +116,7 @@ async function runCli(argv: string[]): Promise<void> {
 
 export function executeCli(argv: string[]): void {
   runCli(argv).catch((error: unknown) => {
-    if (error instanceof MerchIDError) {
+    if (error instanceof MerchantIdError) {
       process.stderr.write(`Error [${error.code}]: ${error.message}\n`);
     } else if (error instanceof Error) {
       process.stderr.write(`Error: ${error.message}\n`);

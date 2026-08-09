@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Payment } from "@copet/merchid";
+import type { Payment } from "merchantid";
 
 const renameControl = vi.hoisted(() => ({ remainingFailures: 0 }));
 
@@ -47,7 +47,7 @@ beforeEach(async () => {
 
 describe("lab state persistence", () => {
   it("removes legacy v1 state and payments before returning v2 defaults", async () => {
-    const dataDirectory = process.env.MERCHID_LAB_DATA_DIR;
+    const dataDirectory = process.env.MERCHANTID_LAB_DATA_DIR;
     if (!dataDirectory)
       throw new Error("test data directory was not configured");
     const statePath = join(dataDirectory, "lab-state.json");

@@ -15,7 +15,7 @@ import {
   MAX_TRANSACTION_PAGES_PER_TICK,
   MAX_TRANSACTION_PAGE_SIZE,
 } from "../core/constants.js";
-import { MerchIDError } from "../core/errors.js";
+import { MerchantIdError } from "../core/errors.js";
 import { AmountAllocator } from "./amountAllocator.js";
 import { reconcile } from "./paymentMatcher.js";
 import { staticToDynamicQris } from "../qris/qris.js";
@@ -85,7 +85,7 @@ function clonePayment(payment: Payment): Payment {
 type EmitterListener = (...args: any[]) => void;
 
 /** Back-reference from a once() wrapper to the listener it wraps. */
-const ONCE_ORIGINAL = Symbol("merchid.onceOriginal");
+const ONCE_ORIGINAL = Symbol("merchantid.onceOriginal");
 
 type MaybeOnceWrapper = EmitterListener & {
   [ONCE_ORIGINAL]?: EmitterListener;
@@ -215,13 +215,13 @@ export class PaymentService extends TinyEmitter {
   constructor(options: PaymentServiceOptions) {
     super();
     if (!options.transactions && !options.transactionFeed) {
-      throw new MerchIDError(
+      throw new MerchantIdError(
         "CONFIG_INVALID",
         "transactions or transactionFeed is required",
       );
     }
     if (options.scope && options.scope.merchantId !== options.merchantId) {
-      throw new MerchIDError(
+      throw new MerchantIdError(
         "CONFIG_INVALID",
         "scope.merchantId must match merchantId",
       );
@@ -328,7 +328,7 @@ export class PaymentService extends TinyEmitter {
     ) {
       return;
     }
-    throw new MerchIDError(
+    throw new MerchantIdError(
       "CONFIG_INVALID",
       "This PaymentService lifecycle is controlled by its provider",
     );
@@ -336,7 +336,7 @@ export class PaymentService extends TinyEmitter {
 
   private assertActive(operation: string): void {
     if (this.active) return;
-    throw new MerchIDError(
+    throw new MerchantIdError(
       "CONFIG_INVALID",
       `Cannot ${operation} with an inactive PaymentService`,
     );
@@ -381,7 +381,7 @@ export class PaymentService extends TinyEmitter {
       (payment) => payment.scope === undefined,
     ).length;
     if (unscopedActiveCount > 0) {
-      throw new MerchIDError(
+      throw new MerchantIdError(
         "CONFIG_INVALID",
         "Active payments without PaymentScope cannot be reconciled by a scoped service",
         { details: { unscopedActiveCount } },
@@ -406,7 +406,7 @@ export class PaymentService extends TinyEmitter {
   async createPayment(input: CreatePaymentInput): Promise<Payment> {
     this.assertActive("create payments");
     if (!Number.isInteger(input.amount) || input.amount <= 0) {
-      throw new MerchIDError(
+      throw new MerchantIdError(
         "CONFIG_INVALID",
         "amount must be a positive integer (whole rupiah)",
       );
@@ -417,7 +417,7 @@ export class PaymentService extends TinyEmitter {
       input.expiresInMs !== undefined &&
       !Number.isFinite(input.expiresInMs)
     ) {
-      throw new MerchIDError(
+      throw new MerchantIdError(
         "CONFIG_INVALID",
         "expiresInMs must be a finite number of milliseconds",
       );
@@ -798,7 +798,7 @@ export class PaymentService extends TinyEmitter {
 
     const transactionLister = this.transactions;
     if (!transactionLister) {
-      throw new MerchIDError(
+      throw new MerchantIdError(
         "CONFIG_INVALID",
         "No transaction source is configured",
       );

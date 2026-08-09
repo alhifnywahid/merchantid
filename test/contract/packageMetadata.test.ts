@@ -19,16 +19,16 @@ const manifest = JSON.parse(
 ) as PackageManifest;
 
 describe("npm package metadata contract", () => {
-  it("ships as merchid without runtime dependencies", () => {
-    expect(manifest.name).toBe("@copet/merchid");
+  it("ships as merchantid without runtime dependencies", () => {
+    expect(manifest.name).toBe("merchantid");
     // Match the shape, not one release: pinning the literal version would make
     // every `npm version` bump fail the publish workflow's own test gate.
     expect(manifest.version).toMatch(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
     expect(manifest.dependencies ?? {}).toEqual({});
   });
 
-  it("exposes one package root and one MerchID CLI binary", () => {
-    expect(manifest.bin).toEqual({ merchid: "dist/cli.cjs" });
+  it("exposes one package root and one MerchantId CLI binary", () => {
+    expect(manifest.bin).toEqual({ merchantid: "dist/cli.cjs" });
     // Only the root entry is importable; "./package.json" is the conventional
     // escape hatch tooling needs and does not widen the API surface.
     expect(Object.keys(manifest.exports ?? {})).toEqual([

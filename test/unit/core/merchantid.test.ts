@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MerchID, createMerchID } from "../../../src/merchid.js";
+import { MerchantId, createMerchantId } from "../../../src/merchantid.js";
 import { ConfigError } from "../../../src/core/errors.js";
 import type { MerchantProvider } from "../../../src/core/provider.js";
 import type { PaymentScope } from "../../../src/core/types.js";
@@ -23,11 +23,11 @@ function provider(options: {
   };
 }
 
-describe("MerchID provider registry", () => {
+describe("MerchantId provider registry", () => {
   it("selects the first provider by default and supports an explicit default", () => {
     const gopay = provider({ id: "gopay" });
     const shopee = provider({ id: "shopee" });
-    const registry = createMerchID({ providers: [gopay, shopee] });
+    const registry = createMerchantId({ providers: [gopay, shopee] });
 
     expect(registry.defaultProviderId).toBe("gopay");
     expect(registry.getProvider()).toBe(gopay);
@@ -43,14 +43,16 @@ describe("MerchID provider registry", () => {
       accountId: "account-1",
       merchantId: "store-1",
     };
-    const registry = new MerchID().register(provider({ id: "gopay" })).register(
-      provider({
-        id: "shopee",
-        authenticated: true,
-        staticQris: "synthetic-qris",
-        scope,
-      }),
-    );
+    const registry = new MerchantId()
+      .register(provider({ id: "gopay" }))
+      .register(
+        provider({
+          id: "shopee",
+          authenticated: true,
+          staticQris: "synthetic-qris",
+          scope,
+        }),
+      );
 
     expect(registry.has("gopay")).toBe(true);
     expect(registry.listProviders()).toEqual([
@@ -72,7 +74,7 @@ describe("MerchID provider registry", () => {
   });
 
   it("exports sessions only for authenticated providers", () => {
-    const registry = new MerchID({
+    const registry = new MerchantId({
       providers: [
         provider({ id: "gopay" }),
         provider({ id: "shopee", authenticated: true }),
@@ -87,14 +89,14 @@ describe("MerchID provider registry", () => {
   it.each(["", " Shopee", "SHOPEE", "shopee_store", "-shopee"])(
     "rejects invalid provider id %j",
     (id) => {
-      expect(() => new MerchID().register(provider({ id }))).toThrowError(
+      expect(() => new MerchantId().register(provider({ id }))).toThrowError(
         ConfigError,
       );
     },
   );
 
   it("rejects duplicate and unknown provider selections", () => {
-    const registry = new MerchID().register(provider({ id: "gopay" }));
+    const registry = new MerchantId().register(provider({ id: "gopay" }));
 
     expect(() => registry.register(provider({ id: "gopay" }))).toThrow(
       /already registered/,
@@ -104,6 +106,8 @@ describe("MerchID provider registry", () => {
   });
 
   it("requires a provider when an empty registry has no default", () => {
-    expect(() => new MerchID().getProvider()).toThrow(/providerId is required/);
+    expect(() => new MerchantId().getProvider()).toThrow(
+      /providerId is required/,
+    );
   });
 });

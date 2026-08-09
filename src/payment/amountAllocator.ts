@@ -1,5 +1,5 @@
 import { DEFAULT_MAX_UNIQUE_OFFSET } from "../core/constants.js";
-import { MerchIDError } from "../core/errors.js";
+import { MerchantIdError } from "../core/errors.js";
 
 /**
  * Allocates a unique whole-rupiah offset so that concurrent orders can be told
@@ -20,7 +20,7 @@ export class AmountAllocator {
 
   constructor(maxOffset: number = DEFAULT_MAX_UNIQUE_OFFSET) {
     if (!Number.isInteger(maxOffset) || maxOffset < 1) {
-      throw new MerchIDError(
+      throw new MerchantIdError(
         "CONFIG_INVALID",
         "maxOffset must be a positive integer",
       );
@@ -41,7 +41,7 @@ export class AmountAllocator {
    * @param takenAmounts Unique amounts currently held by active payments. Values
    * outside this base amount's reachable range are ignored, so callers can pass
    * the whole active set without filtering.
-   * @throws MerchIDError with code AMOUNT_POOL_EXHAUSTED when every slot
+   * @throws MerchantIdError with code AMOUNT_POOL_EXHAUSTED when every slot
    * in range is claimed.
    */
   allocate(baseAmount: number, takenAmounts: Iterable<number>): number {
@@ -53,7 +53,7 @@ export class AmountAllocator {
       }
     }
 
-    throw new MerchIDError(
+    throw new MerchantIdError(
       "AMOUNT_POOL_EXHAUSTED",
       `No free unique amount slot available for base amount ${baseAmount} ` +
         `(offset window 1..${this.maxOffset} is fully claimed)`,

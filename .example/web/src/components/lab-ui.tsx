@@ -233,7 +233,7 @@ export function Stepper({
 
 type ThemeMode = "system" | "light" | "dark";
 
-const THEME_STORAGE_KEY = "merchid-lab-theme";
+const THEME_STORAGE_KEY = "merchantid-lab-theme";
 
 const THEME_OPTIONS: Array<{ mode: ThemeMode; label: string; title: string }> =
   [

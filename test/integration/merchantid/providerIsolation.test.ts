@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PaymentService } from "../../../src/payment/paymentService.js";
 import { InMemoryPaymentStore } from "../../../src/payment/paymentStore.js";
-import { MerchIDError } from "../../../src/core/errors.js";
+import { MerchantIdError } from "../../../src/core/errors.js";
 import type {
   TransactionFeed,
   TransactionFeedQuery,
@@ -149,7 +149,7 @@ describe("provider and store isolation", () => {
 
     await expect(scoped.tick()).resolves.toEqual({ paid: [], expired: [] });
     expect(errors).toHaveLength(1);
-    expect(errors[0]).toBeInstanceOf(MerchIDError);
+    expect(errors[0]).toBeInstanceOf(MerchantIdError);
     expect(errors[0]).toMatchObject({ code: "CONFIG_INVALID" });
     expect(feed.queries).toHaveLength(0);
   });

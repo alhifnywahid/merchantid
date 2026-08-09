@@ -4,12 +4,12 @@ import type { PaymentScope } from "./core/types.js";
 
 export type RegisteredMerchantProvider = MerchantProvider<unknown>;
 
-export interface MerchIDConfig {
+export interface MerchantIdConfig {
   providers?: readonly RegisteredMerchantProvider[];
   defaultProviderId?: string;
 }
 
-export interface MerchIDProviderSummary {
+export interface MerchantIdProviderSummary {
   id: string;
   authenticated: boolean;
   paymentScope?: PaymentScope;
@@ -21,11 +21,11 @@ export interface MerchIDProviderSummary {
  * Provider registry and composition root. Concrete authentication and payment
  * behavior remains owned by each provider adapter.
  */
-export class MerchID {
+export class MerchantId {
   private readonly providers = new Map<string, RegisteredMerchantProvider>();
   private defaultId?: string;
 
-  constructor(config: MerchIDConfig = {}) {
+  constructor(config: MerchantIdConfig = {}) {
     for (const provider of config.providers ?? []) {
       this.register(provider);
     }
@@ -76,7 +76,7 @@ export class MerchID {
     return this.defaultId;
   }
 
-  listProviders(): MerchIDProviderSummary[] {
+  listProviders(): MerchantIdProviderSummary[] {
     return [...this.providers.entries()].map(([id, provider]) => ({
       id,
       authenticated: provider.authenticated,
@@ -104,6 +104,6 @@ export class MerchID {
   }
 }
 
-export function createMerchID(config: MerchIDConfig = {}): MerchID {
-  return new MerchID(config);
+export function createMerchantId(config: MerchantIdConfig = {}): MerchantId {
+  return new MerchantId(config);
 }

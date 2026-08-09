@@ -186,7 +186,7 @@ describe("ShopeeProvider.selectMerchant", () => {
         errorCode: 0,
         data: {
           merchantId: Number(SHOPEE_MERCHANT_TWO_ID),
-          merchantName: "MerchID Dev Merchant North",
+          merchantName: "MerchantId Dev Merchant North",
           store_id: Number(SHOPEE_STORE_TWO_ID),
           tobUserId: 90002,
           tocUid: 90002,

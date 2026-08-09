@@ -1,16 +1,16 @@
 /**
- * MerchID public API.
+ * MerchantId public API.
  *
- * Provider-neutral orchestration lives in `MerchID`; concrete GoPay and Shopee
+ * Provider-neutral orchestration lives in `MerchantId`; concrete GoPay and Shopee
  * adapters remain directly available for focused integrations.
  */
 
-export { MerchID, createMerchID } from "./merchid.js";
+export { MerchantId, createMerchantId } from "./merchantid.js";
 export type {
-  MerchIDConfig,
-  MerchIDProviderSummary,
+  MerchantIdConfig,
+  MerchantIdProviderSummary,
   RegisteredMerchantProvider,
-} from "./merchid.js";
+} from "./merchantid.js";
 export * from "./providers/gopay/index.js";
 export * from "./providers/shopee/index.js";
 export { samePaymentScope } from "./core/provider.js";
@@ -56,14 +56,14 @@ export type {
 } from "./http/httpClient.js";
 
 export {
-  MerchIDError,
+  MerchantIdError,
   ConfigError,
   AuthError,
   CaptchaRequiredError,
   HttpError,
   ApiError,
 } from "./core/errors.js";
-export type { MerchIDErrorCode } from "./core/errors.js";
+export type { MerchantIdErrorCode } from "./core/errors.js";
 
 export * from "./core/types.js";
 export {

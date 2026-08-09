@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-Only the latest published version of `merchid` receives fixes. This project is
+Only the latest published version of `merchantid` receives fixes. This project is
 pre-1.0: patches land on the newest release, not on older lines.
 
 ## Reporting a vulnerability

@@ -120,7 +120,7 @@ function DevelopmentLab() {
             <span className="brand__mark" aria-hidden="true">
               M
             </span>
-            <h1 className="brand__name">MerchID Lab</h1>
+            <h1 className="brand__name">MerchantId Lab</h1>
           </div>
           <ThemeSwitch />
         </header>

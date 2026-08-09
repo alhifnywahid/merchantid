@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg"
      width="1200" height="452" viewBox="0 0 1200 452"
      role="img" aria-labelledby="archTitle archDesc">
-  <title id="archTitle">Arsitektur multi-provider MerchID</title>
-  <desc id="archDesc">Adapter GoPay dan Shopee serta domain payment bergantung pada kontrak core. Setiap provider memiliki autentikasi, pagination, dan normalisasi sendiri, sedangkan MerchID hanya menjadi registry.</desc>
+  <title id="archTitle">Arsitektur multi-provider MerchantId</title>
+  <desc id="archDesc">Adapter GoPay dan Shopee serta domain payment bergantung pada kontrak core. Setiap provider memiliki autentikasi, pagination, dan normalisasi sendiri, sedangkan MerchantId hanya menjadi registry.</desc>
 
   <rect width="1200" height="452" rx="22" fill="#0B0D0C"/>
 
@@ -66,5 +66,5 @@
 
   <text x="56" y="420"
         font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
-        font-size="18" fill="#636863">MerchID mendaftarkan provider; adapter memiliki auth/feed; PaymentService hanya menerima transaksi rupiah yang sudah dinormalisasi dan terscope.</text>
+        font-size="18" fill="#636863">MerchantId mendaftarkan provider; adapter memiliki auth/feed; PaymentService hanya menerima transaksi rupiah yang sudah dinormalisasi dan terscope.</text>
 </svg>

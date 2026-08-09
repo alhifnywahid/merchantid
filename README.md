@@ -1,17 +1,17 @@
 <p align="center">
   <img src="./assets/readme/hero.svg" width="100%"
-       alt="MerchID: toolkit merchant Indonesia untuk QRIS dinamis dan rekonsiliasi pembayaran multi-provider">
+       alt="MerchantId: toolkit merchant Indonesia untuk QRIS dinamis dan rekonsiliasi pembayaran multi-provider">
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@copet/merchid"><img src="https://img.shields.io/npm/v/@copet/merchid?style=flat-square&labelColor=0B0D0C&color=57C99A" alt="Versi npm"></a>
+  <a href="https://www.npmjs.com/package/merchantid"><img src="https://img.shields.io/npm/v/merchantid?style=flat-square&labelColor=0B0D0C&color=57C99A" alt="Versi npm"></a>
   <a href="#dukungan-runtime"><img src="https://img.shields.io/badge/node-%3E%3D18-0B0D0C?style=flat-square&labelColor=0B0D0C&color=6F746F" alt="Node 18 atau lebih baru"></a>
-  <a href="#lisensi"><img src="https://img.shields.io/npm/l/@copet/merchid?style=flat-square&labelColor=0B0D0C&color=6F746F" alt="Lisensi MIT"></a>
+  <a href="#lisensi"><img src="https://img.shields.io/npm/l/merchantid?style=flat-square&labelColor=0B0D0C&color=6F746F" alt="Lisensi MIT"></a>
 </p>
 
-# MerchID
+# MerchantId
 
-MerchID adalah toolkit payment-provider TypeScript untuk merchant Indonesia. Library ini mengubah QRIS statis menjadi QRIS dinamis per pesanan, membaca feed transaksi merchant, dan mencocokkan settlement berdasarkan nominal unik.
+MerchantId adalah toolkit payment-provider TypeScript untuk merchant Indonesia. Library ini mengubah QRIS statis menjadi QRIS dinamis per pesanan, membaca feed transaksi merchant, dan mencocokkan settlement berdasarkan nominal unik.
 
 Provider bawaan saat ini:
 
@@ -20,24 +20,24 @@ Provider bawaan saat ini:
 | GoPay Merchant / GoBiz      | `GopayProvider`  | OTP GoID, access token, refresh token      | Offset pagination GoBiz     | Ditemukan dari outlet atau diberikan manual |
 | Shopee Merchant / ShopeePay | `ShopeeProvider` | OTP fetch-only, cookie jar, merchant token | Cursor pagination ShopeePay | Diberikan manual dan terikat ke store       |
 
-`MerchID` menjadi registry untuk mendaftarkan adapter dan memilih provider aktif tanpa menyatukan detail autentikasi masing-masing provider.
+`MerchantId` menjadi registry untuk mendaftarkan adapter dan memilih provider aktif tanpa menyatukan detail autentikasi masing-masing provider.
 
 > **Klien tidak resmi.** Provider memakai endpoint privat yang tidak berdokumentasi dan dapat berubah tanpa pemberitahuan. Gunakan hanya dengan akun merchant milik Anda sendiri. Jangan menyimpan token, cookie, OTP, atau payload konfigurasi di log maupun repository.
 
 ## Instalasi
 
 ```bash
-npm install @copet/merchid
+npm install merchantid
 ```
 
-MerchID tidak memiliki dependency runtime dan memakai `fetch` global. Node.js 18 atau runtime lain dengan Web Fetch API dapat menjalankan library.
+MerchantId tidak memiliki dependency runtime dan memakai `fetch` global. Node.js 18 atau runtime lain dengan Web Fetch API dapat menjalankan library.
 
 ## Komposisi multi-provider
 
-`MerchID` adalah registry dan composition root. Ia tidak menyamakan alur login provider yang memang berbeda.
+`MerchantId` adalah registry dan composition root. Ia tidak menyamakan alur login provider yang memang berbeda.
 
 ```ts
-import { MerchID, GopayProvider, ShopeeProvider } from "merchid";
+import { MerchantId, GopayProvider, ShopeeProvider } from "merchantid";
 
 const gopay = new GopayProvider({
   merchantId: "G000000001",
@@ -56,13 +56,13 @@ const shopee = new ShopeeProvider({
   session: shopeeSession,
 });
 
-const merchid = new MerchID({
+const merchantid = new MerchantId({
   providers: [gopay, shopee],
   defaultProviderId: "gopay",
 });
 
-console.log(merchid.listProviders());
-const active = merchid.getProvider();
+console.log(merchantid.listProviders());
+const active = merchantid.getProvider();
 console.log(active.providerId, active.authenticated);
 ```
 
@@ -73,18 +73,18 @@ Registry menangani pendaftaran, pemilihan default, status ringkas, dan ekspor se
 ### Login lewat CLI
 
 ```bash
-npx merchid login gopay
-npx merchid merchants gopay
-npx merchid set-merchant G000000001 --provider gopay
-npx merchid whoami
+npx merchantid login gopay
+npx merchantid merchants gopay
+npx merchantid set-merchant G000000001 --provider gopay
+npx merchantid whoami
 ```
 
-CLI menyimpan konfigurasi provider-keyed di `~/.merchid/config.json`. Simpan file itu sebagai kredensial privat.
+CLI menyimpan konfigurasi provider-keyed di `~/.merchantid/config.json`. Simpan file itu sebagai kredensial privat.
 
 ### Membuat dan memantau pembayaran
 
 ```ts
-import { GopayProvider } from "merchid";
+import { GopayProvider } from "merchantid";
 
 const gopay = new GopayProvider({
   merchantId: "G000000001",
@@ -129,7 +129,7 @@ Shopee menggunakan alur OTP fetch-only. Implementasi tidak membutuhkan browser, 
 ### Login OTP, merchant, dan store
 
 ```ts
-import { ShopeeProvider } from "merchid";
+import { ShopeeProvider } from "merchantid";
 
 const shopee = new ShopeeProvider({
   onSessionUpdated: async (session) => {
@@ -237,7 +237,7 @@ Token berotasi setiap pembaruan, jadi `onSessionUpdated` wajib dipasang agar ses
 Bila Shopee meminta CAPTCHA, library melempar `CaptchaRequiredError` dengan code `CAPTCHA_REQUIRED`:
 
 ```ts
-import { CaptchaRequiredError } from "merchid";
+import { CaptchaRequiredError } from "merchantid";
 
 try {
   await shopee.requestOtp("6281234567890");
@@ -270,7 +270,7 @@ await saveSecret("shopee-qris", {
 CLI melakukan binding yang sama secara otomatis:
 
 ```bash
-npx merchid set-qris shopee
+npx merchantid set-qris shopee
 ```
 
 Setelah sesi, store, dan QRIS tersedia:
@@ -339,7 +339,7 @@ interface PaymentScope {
 `PaymentStore` bersama wajib menghormati scope pada `listActive(scope)`. `PaymentService` memfilter ulang hasilnya sebagai pertahanan tambahan, tetapi store persisten tetap harus menegakkan keunikan nominal aktif per scope secara atomik.
 
 ```ts
-import type { Payment, PaymentScope, PaymentStore } from "merchid";
+import type { Payment, PaymentScope, PaymentStore } from "merchantid";
 
 class DatabasePaymentStore implements PaymentStore {
   async create(payment: Payment): Promise<void> {
@@ -369,19 +369,19 @@ class DatabasePaymentStore implements PaymentStore {
 Binary utama:
 
 ```bash
-merchid login [gopay|shopee]
-merchid session [gopay|shopee]
-merchid session [gopay|shopee] --reveal
-merchid merchants [gopay|shopee]
-merchid stores [gopay|shopee]
-merchid whoami
-merchid set-provider <gopay|shopee>
-merchid set-merchant <merchantId> --provider gopay
-merchid set-store <storeId>
-merchid set-qris [gopay|shopee]
+merchantid login [gopay|shopee]
+merchantid session [gopay|shopee]
+merchantid session [gopay|shopee] --reveal
+merchantid merchants [gopay|shopee]
+merchantid stores [gopay|shopee]
+merchantid whoami
+merchantid set-provider <gopay|shopee>
+merchantid set-merchant <merchantId> --provider gopay
+merchantid set-store <storeId>
+merchantid set-qris [gopay|shopee]
 ```
 
-Lokasi default adalah `~/.merchid/config.json`. Gunakan `MERCHID_CONFIG` untuk memilih lokasi lain. File harus mengikuti schema version 1 berikut:
+Lokasi default adalah `~/.merchantid/config.json`. Gunakan `MERCHANTID_CONFIG` untuk memilih lokasi lain. File harus mengikuti schema version 1 berikut:
 
 ```jsonc
 {
@@ -410,17 +410,17 @@ Contoh di atas hanya menunjukkan bentuk, dan sengaja tanpa trailing comma: file 
 
 ## Penanganan error
 
-`MerchIDError` adalah base error publik untuk seluruh kegagalan bertipe yang disurface-kan library.
+`MerchantIdError` adalah base error publik untuk seluruh kegagalan bertipe yang disurface-kan library.
 
 ```ts
-import { MerchIDError, HttpError } from "merchid";
+import { MerchantIdError, HttpError } from "merchantid";
 
 try {
   await provider.createPayment({ amount: 10_000 });
 } catch (error) {
   if (error instanceof HttpError) {
     console.error("HTTP", error.status);
-  } else if (error instanceof MerchIDError) {
+  } else if (error instanceof MerchantIdError) {
     console.error(error.code, error.message);
   } else {
     throw error;
@@ -449,7 +449,7 @@ Jangan membuat matcher menerima skala mentah dan skala rupiah sekaligus. Transak
 
 ### GoPay: page size maksimum 100
 
-Feed GoBiz menolak `size > 100` dengan HTTP 422. MerchID meng-clamp page size dan memindai sampai 10 halaman per tick. Jendela dimulai dari pembayaran aktif tertua, dikurangi `clockSkewMs`, dengan plafon bergulir 24 jam.
+Feed GoBiz menolak `size > 100` dengan HTTP 422. MerchantId meng-clamp page size dan memindai sampai 10 halaman per tick. Jendela dimulai dari pembayaran aktif tertua, dikurangi `clockSkewMs`, dengan plafon bergulir 24 jam.
 
 Jika outlet lebih sibuk dari kapasitas itu, pendekkan masa berlaku pembayaran. Jangan menaikkan page size melewati limit API.
 
@@ -498,7 +498,7 @@ Default pembayaran adalah 5 menit. Feed dapat terlambat mengindeks transaksi, te
 ## Utilitas QRIS
 
 ```ts
-import { isValidQrisChecksum, parseEmv, staticToDynamicQris } from "merchid";
+import { isValidQrisChecksum, parseEmv, staticToDynamicQris } from "merchantid";
 
 const dynamic = staticToDynamicQris(staticPayload, 10_001);
 isValidQrisChecksum(dynamic); // true
@@ -518,7 +518,7 @@ CI menjalankan Node 18 dan 24 di Linux serta Node 24 di Windows. Runtime lain **
 
 ## Arsitektur
 
-<img src="./assets/readme/architecture.svg" width="100%" alt="Lapisan MerchID: core mendeklarasikan kontrak, provider dan transport mengimplementasikannya" />
+<img src="./assets/readme/architecture.svg" width="100%" alt="Lapisan MerchantId: core mendeklarasikan kontrak, provider dan transport mengimplementasikannya" />
 
 ```text
 src/
@@ -528,7 +528,7 @@ src/
   providers/gopay/gopayProvider.ts   facade dan adapter GoPay
   providers/shopee/shopeeProvider.ts facade dan adapter Shopee
   api/ + auth/ + http/               implementasi wire GoPay
-  merchid.ts                         registry dan composition root
+  merchantid.ts                         registry dan composition root
   cli/                               CLI multi-provider, satu-satunya area Node builtin
   index.ts                           re-export API publik
 ```
@@ -539,7 +539,7 @@ Setiap provider memiliki pagination dan normalisasi sendiri. `PaymentService` ha
 
 ## Development lab lokal
 
-[`.example/web`](.example/web/) adalah utility TanStack Start + Tailwind untuk menguji build package root melalui `merchid: file:../..`, bukan versi npm. Halamannya memiliki tab GoPay dan Shopee untuk login OTP, sesi tersunting, discovery merchant/store, binding QRIS, create/cancel payment, dan rekonsiliasi manual.
+[`.example/web`](.example/web/) adalah utility TanStack Start + Tailwind untuk menguji build package root melalui `merchantid: file:../..`, bukan versi npm. Halamannya memiliki tab GoPay dan Shopee untuk login OTP, sesi tersunting, discovery merchant/store, binding QRIS, create/cancel payment, dan rekonsiliasi manual.
 
 ```powershell
 npm run build

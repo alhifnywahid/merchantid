@@ -8,7 +8,7 @@ import { themeBootScript } from "../components/lab-ui";
 import appCss from "../styles.css?url";
 
 const description =
-  "Utility lokal live-only untuk menguji integrasi GoPay dan Shopee melalui package MerchID.";
+  "Utility lokal live-only untuk menguji integrasi GoPay dan Shopee melalui package MerchantId.";
 
 /** Coral registration mark on near-black — the drafting motif at 16px. */
 const favicon =
@@ -22,7 +22,7 @@ export const Route = createRootRoute({
         name: "viewport",
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
-      { title: "MerchID Lab · konsol integrasi live" },
+      { title: "MerchantId Lab · konsol integrasi live" },
       { name: "description", content: description },
       { name: "color-scheme", content: "light dark" },
       {
@@ -37,7 +37,7 @@ export const Route = createRootRoute({
       },
       { name: "robots", content: "noindex, nofollow" },
       { property: "og:type", content: "website" },
-      { property: "og:title", content: "MerchID Lab" },
+      { property: "og:title", content: "MerchantId Lab" },
       { property: "og:description", content: description },
     ],
     links: [

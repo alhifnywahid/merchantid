@@ -12,13 +12,13 @@ contain breaking changes, and each one is listed under **Changed** or
 
 ## [0.1.0] - 2026-08-09
 
-First public release. MerchID turns a merchant's static QRIS into a unique
+First public release. MerchantId turns a merchant's static QRIS into a unique
 per-order dynamic QRIS and reconciles settlement by polling the provider's own
 transaction feed — for GoPay Merchant (GoBiz) and ShopeePay Merchant.
 
 ### Added
 
-- Provider-neutral `MerchID` facade with `GopayProvider` and `ShopeeProvider`
+- Provider-neutral `MerchantId` facade with `GopayProvider` and `ShopeeProvider`
   adapters behind a shared `MerchantProvider` port.
 - Payment lifecycle: unique-amount allocation, transaction matching, expiry,
   cancellation, and background reconciliation polling.
@@ -30,10 +30,10 @@ transaction feed — for GoPay Merchant (GoBiz) and ShopeePay Merchant.
   browser login, merchant and store discovery, merchant switching without a new
   OTP, silent session renewal while the account session is alive, and the
   transaction feed.
-- `merchid` CLI for login, session inspection, merchant/store selection, and
+- `merchantid` CLI for login, session inspection, merchant/store selection, and
   binding a static QRIS.
 - Zero runtime dependencies; ESM and CommonJS builds with type declarations for
   both.
 
-[unreleased]: https://github.com/alhifnywahid/merchid/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/alhifnywahid/merchid/releases/tag/v0.1.0
+[unreleased]: https://github.com/alhifnywahid/merchantid/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/alhifnywahid/merchantid/releases/tag/v0.1.0

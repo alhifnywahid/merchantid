@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg"
      width="1200" height="336" viewBox="0 0 1200 336"
      role="img" aria-labelledby="flowTitle flowDesc">
-  <title id="flowTitle">Alur settlement multi-provider MerchID</title>
+  <title id="flowTitle">Alur settlement multi-provider MerchantId</title>
   <desc id="flowDesc">Lima tahap: pesanan masuk, alokasi nominal unik dalam scope, QRIS dinamis, pengambilan feed GoPay atau Shopee, lalu pencocokan transaksi yang menandai pesanan lunas.</desc>
 
   <rect width="1200" height="336" rx="22" fill="#0B0D0C"/>

@@ -1,5 +1,5 @@
 import { crc16ccitt } from "../utils/crc16.js";
-import { MerchIDError } from "../core/errors.js";
+import { MerchantIdError } from "../core/errors.js";
 
 /**
  * A parsed EMVCo QR data object: a map of tag id to raw value string. Nested
@@ -31,7 +31,7 @@ export function parseEmv(payload: string): EmvTlvMap {
 
   while (cursor < bytes.length) {
     const malformed = (): never => {
-      throw new MerchIDError(
+      throw new MerchantIdError(
         "QRIS_PARSE_ERROR",
         `Malformed QRIS payload near byte ${cursor}`,
       );
@@ -70,7 +70,7 @@ export function parseEmv(payload: string): EmvTlvMap {
 export function encodeTlv(tag: string, value: string): string {
   const byteLength = new TextEncoder().encode(value).length;
   if (byteLength > 99) {
-    throw new MerchIDError(
+    throw new MerchantIdError(
       "QRIS_PARSE_ERROR",
       `QRIS tag ${tag} value is ${byteLength} bytes, exceeding the 99-byte limit`,
     );
@@ -115,7 +115,7 @@ export function staticToDynamicQris(
   amount: number,
 ): string {
   if (!Number.isInteger(amount) || amount <= 0) {
-    throw new MerchIDError(
+    throw new MerchantIdError(
       "QRIS_PARSE_ERROR",
       "QRIS amount must be a positive integer",
     );
@@ -128,7 +128,7 @@ export function staticToDynamicQris(
   // checksum is the only integrity signal available, so it is checked here,
   // at the single point where a static payload becomes a payable one.
   if (!isValidQrisChecksum(staticPayload)) {
-    throw new MerchIDError(
+    throw new MerchantIdError(
       "QRIS_PARSE_ERROR",
       "QRIS checksum is invalid; refusing to build a payable QR from it",
     );
@@ -137,7 +137,7 @@ export function staticToDynamicQris(
   const map = parseEmv(staticPayload);
 
   if (!map.has(TAG_PAYLOAD_FORMAT)) {
-    throw new MerchIDError(
+    throw new MerchantIdError(
       "QRIS_PARSE_ERROR",
       "Input does not look like a QRIS payload (missing tag 00)",
     );
