@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # Both names are listed so the default branch can be either without CI
+    # silently never running — a workflow that matches no branch fails open.
+    branches: [main, master]
   pull_request:
 
 permissions:
