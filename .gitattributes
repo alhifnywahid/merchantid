@@ -1,0 +1,19 @@
+# Normalize every text file to LF in the repository and on checkout.
+#
+# Without this, Git for Windows (`core.autocrlf=true` by default) hands the
+# Windows CI runner CRLF working copies, and `prettier --check` — which formats
+# to LF — then fails on every file while the Linux runners pass. Pinning the
+# line ending here makes the checkout identical on all three platforms.
+* text=auto eol=lf
+
+# Binary and pre-rendered assets must never be line-ending converted.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.har binary
+
+# Generated lockfile: keep it out of diffs and reviews.
+package-lock.json linguist-generated=true -diff
