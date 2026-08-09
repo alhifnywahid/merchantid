@@ -63,5 +63,8 @@ jobs:
       - name: Build package
         run: npm run build
 
+      # Provenance only works inside CI (OIDC); --provenance here, not in
+      # package.json, so a manual `npm publish` from a maintainer's machine
+      # does not fail with "Automatic provenance generation not supported".
       - name: Publish to npm
-        run: npm publish
+        run: npm publish --provenance --access public
