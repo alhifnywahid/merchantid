@@ -20,7 +20,7 @@ const manifest = JSON.parse(
 
 describe("npm package metadata contract", () => {
   it("ships as merchid without runtime dependencies", () => {
-    expect(manifest.name).toBe("merchid");
+    expect(manifest.name).toBe("@copet/merchid");
     // Match the shape, not one release: pinning the literal version would make
     // every `npm version` bump fail the publish workflow's own test gate.
     expect(manifest.version).toMatch(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);

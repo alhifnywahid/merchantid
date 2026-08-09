@@ -1,5 +1,5 @@
 {
-  "name": "merchid",
+  "name": "@copet/merchid",
   "version": "0.1.0",
   "description": "MerchID - Extensible, zero-runtime-dependency payment toolkit for GoPay and Shopee merchants in Indonesia. Creates dynamic QRIS payments and reconciles provider transaction feeds.",
   "repository": {

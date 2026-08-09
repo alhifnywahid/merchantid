@@ -13,7 +13,7 @@ import {
   type ShopeeOtpChallenge,
   type ShopeeOtpVerification,
   type ShopeeProviderConfig,
-} from "merchid";
+} from "@copet/merchid";
 import { renderSVG } from "uqr";
 import type {
   ActionResult,

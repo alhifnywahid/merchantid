@@ -1,14 +1,14 @@
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { samePaymentScope } from "merchid";
-import type { Payment, PaymentScope, PaymentStore } from "merchid";
+import { samePaymentScope } from "@copet/merchid";
+import type { Payment, PaymentScope, PaymentStore } from "@copet/merchid";
 import type { ActivityView, ProviderId } from "../lib/lab-types";
 import type {
   SessionState,
   ShopeeSession,
   ShopeeStaticQrisScope,
-} from "merchid";
+} from "@copet/merchid";
 
 // Anchored to this file, not `process.cwd()`. Deriving it from the working
 // directory meant launching the lab from the repo root wrote real provider

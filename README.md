@@ -4,9 +4,9 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/merchid"><img src="https://img.shields.io/npm/v/merchid?style=flat-square&labelColor=0B0D0C&color=57C99A" alt="Versi npm"></a>
+  <a href="https://www.npmjs.com/package/@copet/merchid"><img src="https://img.shields.io/npm/v/@copet/merchid?style=flat-square&labelColor=0B0D0C&color=57C99A" alt="Versi npm"></a>
   <a href="#dukungan-runtime"><img src="https://img.shields.io/badge/node-%3E%3D18-0B0D0C?style=flat-square&labelColor=0B0D0C&color=6F746F" alt="Node 18 atau lebih baru"></a>
-  <a href="#lisensi"><img src="https://img.shields.io/npm/l/merchid?style=flat-square&labelColor=0B0D0C&color=6F746F" alt="Lisensi MIT"></a>
+  <a href="#lisensi"><img src="https://img.shields.io/npm/l/@copet/merchid?style=flat-square&labelColor=0B0D0C&color=6F746F" alt="Lisensi MIT"></a>
 </p>
 
 # MerchID
@@ -27,7 +27,7 @@ Provider bawaan saat ini:
 ## Instalasi
 
 ```bash
-npm install merchid
+npm install @copet/merchid
 ```
 
 MerchID tidak memiliki dependency runtime dan memakai `fetch` global. Node.js 18 atau runtime lain dengan Web Fetch API dapat menjalankan library.

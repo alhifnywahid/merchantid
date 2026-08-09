@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Payment } from "merchid";
+import type { Payment } from "@copet/merchid";
 
 const renameControl = vi.hoisted(() => ({ remainingFailures: 0 }));
 
