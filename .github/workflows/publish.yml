@@ -1,0 +1,67 @@
+name: Publish Package
+
+on:
+  release:
+    # `created` also fires when a *draft* is saved, and does not fire when an
+    # existing draft is later published — the opposite of what a release gate
+    # needs. `published` fires exactly once, when the release goes public.
+    types: [published]
+  workflow_dispatch:
+
+# Never let two publishes race: a re-run alongside the original release event
+# could otherwise both reach `npm publish`.
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required for npm trusted publishing (OIDC)
+      contents: read
+    steps:
+      # Actions are pinned by commit SHA, not by tag: a tag can be moved, and
+      # this job holds an OIDC token that can publish to npm.
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          # Node 24 ships npm >= 11.5.1, which trusted publishing requires.
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+
+      - name: Verify the tag matches the manifest version
+        if: github.event_name == 'release'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION="v$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "Release tag $TAG does not match package.json $VERSION" >&2
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build package
+        run: npm run build
+
+      - name: Publish to npm
+        run: npm publish

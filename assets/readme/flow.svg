@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="336" viewBox="0 0 1200 336"
+     role="img" aria-labelledby="flowTitle flowDesc">
+  <title id="flowTitle">Alur settlement multi-provider MerchID</title>
+  <desc id="flowDesc">Lima tahap: pesanan masuk, alokasi nominal unik dalam scope, QRIS dinamis, pengambilan feed GoPay atau Shopee, lalu pencocokan transaksi yang menandai pesanan lunas.</desc>
+
+  <rect width="1200" height="336" rx="22" fill="#0B0D0C"/>
+
+  <text x="69" y="56"
+        font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+        font-size="19" letter-spacing="3" fill="#6F746F">ALUR SETTLEMENT · PROVIDER-SCOPED</text>
+
+  <g font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">
+    <g id="step-1" transform="translate(69 88)">
+      <rect width="190" height="176" rx="12" fill="#111413" stroke="#1F2422" stroke-width="1.5"/>
+      <text x="20" y="32" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#565A56">01</text>
+      <text x="20" y="68" font-size="21" font-weight="600" fill="#F5F5F2">Pesanan masuk</text>
+      <text x="20" y="96" font-size="18" fill="#9AA09A">Nominal diminta</text>
+      <text x="20" y="118" font-size="18" fill="#9AA09A">Rp 10.000</text>
+      <line x1="20" y1="136" x2="170" y2="136" stroke="#1F2422" stroke-width="1.5"/>
+      <text x="20" y="158" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#6F746F">createPayment</text>
+    </g>
+
+    <g id="step-2" transform="translate(287 88)">
+      <rect width="190" height="176" rx="12" fill="#111413" stroke="#1F2422" stroke-width="1.5"/>
+      <text x="20" y="32" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#565A56">02</text>
+      <text x="20" y="68" font-size="21" font-weight="600" fill="#F5F5F2">Scoped amount</text>
+      <text x="20" y="96" font-size="18" fill="#9AA09A">Unik per provider</text>
+      <text x="20" y="118" font-size="18" fill="#9AA09A">dan merchant-store</text>
+      <line x1="20" y1="136" x2="170" y2="136" stroke="#1F2422" stroke-width="1.5"/>
+      <text x="20" y="158" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#E9B44C">Rp 10.001</text>
+    </g>
+
+    <g id="step-3" transform="translate(505 88)">
+      <rect width="190" height="176" rx="12" fill="#111413" stroke="#1F2422" stroke-width="1.5"/>
+      <text x="20" y="32" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#565A56">03</text>
+      <text x="20" y="68" font-size="21" font-weight="600" fill="#F5F5F2">QRIS dinamis</text>
+      <text x="20" y="96" font-size="18" fill="#9AA09A">Tag 54 ditanam,</text>
+      <text x="20" y="118" font-size="18" fill="#9AA09A">CRC dihitung ulang</text>
+      <line x1="20" y1="136" x2="170" y2="136" stroke="#1F2422" stroke-width="1.5"/>
+      <text x="20" y="158" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#6F746F">POI 12 · EMV</text>
+    </g>
+
+    <g id="step-4" transform="translate(723 88)">
+      <rect width="190" height="176" rx="12" fill="#111413" stroke="#1F2422" stroke-width="1.5"/>
+      <text x="20" y="32" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#565A56">04</text>
+      <text x="20" y="68" font-size="21" font-weight="600" fill="#F5F5F2">Provider feed</text>
+      <text x="20" y="96" font-size="18" fill="#9AA09A">GoPay offset atau</text>
+      <text x="20" y="118" font-size="18" fill="#9AA09A">Shopee cursor</text>
+      <line x1="20" y1="136" x2="170" y2="136" stroke="#1F2422" stroke-width="1.5"/>
+      <text x="20" y="158" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#6F746F">whole rupiah</text>
+    </g>
+
+    <g id="step-5" transform="translate(941 88)">
+      <rect width="190" height="176" rx="12" fill="#101614" stroke="#2C3A33" stroke-width="1.5"/>
+      <text x="20" y="32" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#565A56">05</text>
+      <text x="20" y="68" font-size="21" font-weight="600" fill="#F5F5F2">Cocok, lunas</text>
+      <text x="20" y="96" font-size="18" fill="#9AA09A">Nominal, status,</text>
+      <text x="20" y="118" font-size="18" fill="#9AA09A">waktu, dan scope</text>
+      <line x1="20" y1="136" x2="170" y2="136" stroke="#2C3A33" stroke-width="1.5"/>
+      <text x="20" y="158" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" fill="#57C99A">event paid</text>
+    </g>
+  </g>
+
+  <g fill="none" stroke="#4A504A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M267 170 l8 6 l-8 6"/>
+    <path d="M485 170 l8 6 l-8 6"/>
+    <path d="M703 170 l8 6 l-8 6"/>
+    <path d="M921 170 l8 6 l-8 6"/>
+  </g>
+
+  <text x="69" y="304"
+        font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+        font-size="18" fill="#636863">Adapter menormalisasi feed; core hanya mencocokkan transaksi rupiah dalam PaymentScope yang sama.</text>
+</svg>

@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# Cancel superseded runs for the same branch/PR to save minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / Node ${{ matrix.node-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Node 18 is the engines floor; Node 24 is what publish.yml uses.
+        # windows-latest mirrors the maintainer's development environment.
+        include:
+          - os: ubuntu-latest
+            node-version: 18
+          - os: ubuntu-latest
+            node-version: 24
+          - os: windows-latest
+            node-version: 24
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # ESLint 10 and Prettier both require Node >= 20.19, above the library's
+      # runtime floor of 18. The Node 18 job still proves runtime compatibility
+      # via typecheck, tests, and build; lint and formatting are
+      # environment-independent, so running them once on modern Node is enough.
+      - name: Lint
+        if: matrix.node-version != 18
+        run: npm run lint
+
+      - name: Check formatting
+        if: matrix.node-version != 18
+        run: npm run format:check
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build package
+        run: npm run build

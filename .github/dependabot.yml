@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # The library has zero runtime dependencies; these are the build and test
+  # toolchain. Monthly keeps the signal useful — weekly would be noise for a
+  # single-maintainer project.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        patterns: ["*"]
+
+  # Workflow actions are pinned by SHA, so this is the only thing that moves
+  # them forward when an upstream security fix lands.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly

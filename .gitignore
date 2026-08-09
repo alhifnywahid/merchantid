@@ -1,0 +1,76 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage
+*.lcov
+.nyc_output
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# Network captures and the reverse-engineering scratch directory.
+#
+# These hold real recorded sessions: cookies, bearer tokens, OTP exchanges, and
+# merchant identifiers. They must never reach GitHub or npm. Both a filename
+# rule and a directory rule are listed on purpose — either one alone would be a
+# single point of failure, and captures have a habit of being saved somewhere
+# new. `**/` makes the filename rules apply at any depth.
+**/*.har
+**/*.har.gz
+**/*.saz
+**/*.chlsj
+**/*.pcap
+**/*.pcapng
+.flow/
+**/.flow/
+
+# Stored credentials: CLI config and the demo lab's persisted sessions.
+.merchid/
+.gopay-session.json
+.web-session.json
+config.json
+**/*session*.json
+.example/*/data/
+**/lab-state.json
+**/payments.json
+# Bare `data/` too: the demo lab used to derive its directory from
+# `process.cwd()`, so launching it from the repo root wrote credentials to
+# <repo>/data/. That is fixed, but the rule stays as a backstop.
+/data/
+
+# Editor/agent working artifacts that must never reach a release
+.kiro/
+.deleted/
+
+# OS
+Thumbs.db

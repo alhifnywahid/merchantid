@@ -1,0 +1,91 @@
+{
+  "name": "merchid",
+  "version": "0.1.0",
+  "description": "MerchID - Extensible, zero-runtime-dependency payment toolkit for GoPay and Shopee merchants in Indonesia. Creates dynamic QRIS payments and reconciles provider transaction feeds.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alhifnywahid/merchid.git"
+  },
+  "bugs": {
+    "url": "https://github.com/alhifnywahid/merchid/issues"
+  },
+  "homepage": "https://github.com/alhifnywahid/merchid#readme",
+  "author": "alhifnywahid",
+  "keywords": [
+    "merchid",
+    "multi-provider",
+    "gopay",
+    "gopay-merchant",
+    "gobiz",
+    "gofood",
+    "shopee",
+    "shopee-merchant",
+    "shopeepay",
+    "qris",
+    "qris-dynamic",
+    "payment-gateway",
+    "payment",
+    "indonesia",
+    "indonesian-payment",
+    "merchant",
+    "typescript",
+    "nodejs",
+    "e-wallet"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "merchid": "dist/cli.cjs"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    "dist",
+    "assets/readme"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "lint": "eslint \"{src,test}/**/*.ts\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.0.0",
+    "@vitest/coverage-v8": "^3.2.7",
+    "eslint": "^10.8.0",
+    "prettier": "^3.9.6",
+    "tsup": "^8.1.0",
+    "tsx": "^4.23.1",
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.65.0",
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="452" viewBox="0 0 1200 452"
+     role="img" aria-labelledby="archTitle archDesc">
+  <title id="archTitle">Arsitektur multi-provider MerchID</title>
+  <desc id="archDesc">Adapter GoPay dan Shopee serta domain payment bergantung pada kontrak core. Setiap provider memiliki autentikasi, pagination, dan normalisasi sendiri, sedangkan MerchID hanya menjadi registry.</desc>
+
+  <rect width="1200" height="452" rx="22" fill="#0B0D0C"/>
+
+  <text x="56" y="56"
+        font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+        font-size="19" letter-spacing="3" fill="#6F746F">DEPENDENCY RULE · PROVIDER DETAILS STAY OUTSIDE CORE</text>
+
+  <g font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">
+    <g id="providers" transform="translate(56 90)">
+      <rect width="310" height="280" rx="12" fill="#111413" stroke="#1F2422" stroke-width="1.5"/>
+      <text x="22" y="34" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" letter-spacing="1.6" fill="#565A56">ADAPTER LUAR</text>
+      <text x="22" y="68" font-size="22" font-weight="600" fill="#F5F5F2">providers/</text>
+      <text x="22" y="96" font-size="18" fill="#9AA09A">Auth, wire, pagination</text>
+      <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="19" fill="#C6C9C5">
+        <text x="22" y="132">gopay / offset feed</text>
+        <text x="22" y="162">shopee / cursor feed</text>
+        <text x="22" y="192">session + merchant/store</text>
+        <text x="22" y="222">amount normalization</text>
+      </g>
+      <line x1="22" y1="242" x2="288" y2="242" stroke="#1F2422" stroke-width="1.5"/>
+      <text x="22" y="266" font-size="18" fill="#636863">Detail provider tetap lokal.</text>
+    </g>
+
+    <g id="core" transform="translate(420 90)">
+      <rect width="360" height="280" rx="12" fill="#101614" stroke="#2C3A33" stroke-width="1.5"/>
+      <text x="22" y="34" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" letter-spacing="1.6" fill="#57C99A">LAYER DALAM</text>
+      <text x="22" y="68" font-size="22" font-weight="600" fill="#F5F5F2">core/</text>
+      <text x="22" y="96" font-size="18" fill="#9AA09A">Kontrak provider-neutral</text>
+      <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="19" fill="#57C99A">
+        <text x="22" y="132">MerchantProvider</text>
+        <text x="22" y="162">TransactionFeed</text>
+        <text x="22" y="192">PaymentScope</text>
+        <text x="22" y="222">PaymentStore</text>
+      </g>
+      <line x1="22" y1="242" x2="338" y2="242" stroke="#2C3A33" stroke-width="1.5"/>
+      <text x="22" y="266" font-size="18" fill="#636863">Tidak mengimpor adapter.</text>
+    </g>
+
+    <g id="payment" transform="translate(834 90)">
+      <rect width="310" height="280" rx="12" fill="#111413" stroke="#1F2422" stroke-width="1.5"/>
+      <text x="22" y="34" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="18" letter-spacing="1.6" fill="#565A56">DOMAIN LUAR</text>
+      <text x="22" y="68" font-size="22" font-weight="600" fill="#F5F5F2">payment/ · qris/</text>
+      <text x="22" y="96" font-size="18" fill="#9AA09A">Orkestrasi bersama</text>
+      <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="19" fill="#C6C9C5">
+        <text x="22" y="132">PaymentService</text>
+        <text x="22" y="162">AmountAllocator</text>
+        <text x="22" y="192">paymentMatcher</text>
+        <text x="22" y="222">EMV / QRIS builder</text>
+      </g>
+      <line x1="22" y1="242" x2="288" y2="242" stroke="#1F2422" stroke-width="1.5"/>
+      <text x="22" y="266" font-size="18" fill="#636863">Tidak tahu wire provider.</text>
+    </g>
+  </g>
+
+  <g stroke="#4A504A" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="368" y1="230" x2="410" y2="230"/>
+    <path d="M404 224 l7 6 l-7 6"/>
+    <line x1="832" y1="230" x2="790" y2="230"/>
+    <path d="M796 224 l-7 6 l7 6"/>
+  </g>
+
+  <text x="56" y="420"
+        font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+        font-size="18" fill="#636863">MerchID mendaftarkan provider; adapter memiliki auth/feed; PaymentService hanya menerima transaksi rupiah yang sudah dinormalisasi dan terscope.</text>
+</svg>

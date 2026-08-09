@@ -1,0 +1,1354 @@
+/*
+ * MerchID Lab visual system.
+ *
+ * Implements the Tokokino design language (see ../design.md): near-neutral
+ * greys carrying one coral action colour, hairlines and dashed drafting rails
+ * instead of shadows, tight negative tracking on headings, and exactly two
+ * motion durations. Density follows the "editor" tier of that system — 28px
+ * control rows, 12px UI text — because this lab is an instrument.
+ *
+ * The layout rule is progressive disclosure: a surface is rendered only once
+ * it can be acted on, so there are no disabled placeholders and no copy
+ * explaining what is not available yet.
+ *
+ * Two documented deviations, both for WCAG 2.1 AA:
+ *   - light `--primary` sits at oklch L 58% instead of 62% so 12px text on the
+ *     coral fill reaches 4.65:1 (the measured 62% value lands at 3.94:1);
+ *   - dark `--primary-foreground` is the near-black ink rather than the bone
+ *     white, because bone white on `#ff5d6e` is only 2.90:1.
+ */
+
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "Cascadia Code",
+    "SFMono-Regular", Consolas, monospace;
+}
+
+/* ------------------------------------------------------------------ tokens */
+
+:root {
+  color-scheme: light dark;
+
+  --background: light-dark(oklch(98.43% 0.0011 197.14), oklch(16.84% 0 0));
+  --foreground: light-dark(oklch(14.16% 0.0028 325.73), oklch(97.02% 0 0));
+  --card: light-dark(oklch(100% 0 0), oklch(19.13% 0 0));
+  --popover: light-dark(oklch(100% 0 0), oklch(20.9% 0 0));
+
+  /* Sole action colour. */
+  --primary: light-dark(oklch(58% 0.2103 17.87), oklch(69.53% 0.1964 17.75));
+  --primary-foreground: light-dark(
+    oklch(98.99% 0.0093 99.98),
+    oklch(14.16% 0.0028 325.73)
+  );
+
+  --secondary: light-dark(oklch(95.51% 0 0), oklch(22.21% 0 0));
+  --secondary-foreground: light-dark(oklch(20.9% 0 0), oklch(97.02% 0 0));
+  --muted: var(--secondary);
+  --muted-foreground: light-dark(oklch(53.82% 0 0), oklch(61.79% 0.0019 325.6));
+
+  /* State wash — never a button fill. */
+  --accent: light-dark(
+    oklch(88.09% 0.0837 144.82 / 0.22),
+    oklch(30.46% 0.0816 144.31 / 0.27)
+  );
+  --accent-foreground: light-dark(
+    oklch(48.08% 0.1306 144.91),
+    oklch(81.87% 0.1501 144.98)
+  );
+
+  /* Light sits at L 51% rather than the measured 58.3%: destructive text is
+     always read against its own 8-10% wash, which costs ~0.7 of contrast. */
+  --destructive: light-dark(
+    oklch(51% 0.2387 28.48),
+    oklch(70.22% 0.1892 22.23)
+  );
+
+  /* Dark borders are alpha-white so they hold on any surface. */
+  --border: light-dark(oklch(89.98% 0.0011 197.14), oklch(100% 0 0 / 0.12));
+  --input: light-dark(oklch(89.98% 0.0011 197.14), oklch(100% 0 0 / 0.14));
+  --ring: var(--primary);
+
+  --fg-60: color-mix(in oklch, var(--foreground) 60%, transparent);
+  --fg-40: color-mix(in oklch, var(--foreground) 40%, transparent);
+  --fg-10: color-mix(in oklch, var(--foreground) 10%, transparent);
+
+  --rail: color-mix(in oklch, var(--foreground) 20%, transparent);
+  --crop: color-mix(in oklch, var(--foreground) 32%, transparent);
+  --dash: repeating-linear-gradient(
+    to right,
+    var(--rail) 0 6px,
+    transparent 6px 14px
+  );
+  --dash-y: repeating-linear-gradient(
+    to bottom,
+    var(--rail) 0 6px,
+    transparent 6px 14px
+  );
+
+  --selection-bg: light-dark(
+    oklch(58% 0.2103 17.87 / 0.28),
+    oklch(81.84% 0.1372 144.99 / 0.3)
+  );
+
+  --radius: 0.7rem;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+
+  /* Two durations. No third. */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --fast: 150ms;
+  --slow: 500ms;
+
+  --control: 1.75rem;
+  --control-lg: 2.25rem;
+
+  --z-toast: 40;
+  --z-skip: 60;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* -------------------------------------------------------------------- base */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  overflow-x: clip;
+  background: var(--background);
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Controls inherit from their container; `body` must keep its own font and
+   colour, so it is deliberately absent from this list. */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea,
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+summary {
+  touch-action: manipulation;
+}
+
+button:not(:disabled),
+select:not(:disabled),
+summary {
+  cursor: pointer;
+}
+
+:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+::selection {
+  background: var(--selection-bg);
+}
+
+:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--ring) 55%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+h1,
+h2,
+h3,
+p,
+dl,
+dd,
+dt,
+ol,
+ul {
+  margin: 0;
+}
+
+ol,
+ul {
+  padding: 0;
+  list-style: none;
+}
+
+code,
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* -------------------------------------------------------------- primitives */
+
+.eyebrow {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.16em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+/* Full-bleed dashed section rule — the system's boundary marker. */
+.rule {
+  width: 99.6vw;
+  height: 1px;
+  margin-inline: calc(50% - 49.8vw);
+  background-image: var(--dash);
+}
+
+.rule--inset {
+  width: 100%;
+  margin-inline: 0;
+}
+
+/* Corner registration marks. One pseudo-element, eight gradient layers. */
+.frame {
+  position: relative;
+}
+
+.frame::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  pointer-events: none;
+  background-image: linear-gradient(var(--crop) 0 0),
+    linear-gradient(var(--crop) 0 0), linear-gradient(var(--crop) 0 0),
+    linear-gradient(var(--crop) 0 0), linear-gradient(var(--crop) 0 0),
+    linear-gradient(var(--crop) 0 0), linear-gradient(var(--crop) 0 0),
+    linear-gradient(var(--crop) 0 0);
+  background-repeat: no-repeat;
+  background-size: 9px 1px, 1px 9px, 9px 1px, 1px 9px, 9px 1px, 1px 9px,
+    9px 1px, 1px 9px;
+  background-position: left top 4px, left 4px top, right top 4px, right 4px top,
+    left bottom 4px, left 4px bottom, right bottom 4px, right 4px bottom;
+}
+
+.shell {
+  width: min(100% - 1rem, 76rem);
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+/* Button. Border-only, no shadow in any variant, ring on focus. */
+.btn {
+  display: inline-flex;
+  min-height: var(--control);
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding-inline: 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background-color var(--fast) var(--ease),
+    border-color var(--fast) var(--ease), color var(--fast) var(--ease),
+    translate var(--fast) var(--ease);
+}
+
+.btn:active:not(:disabled) {
+  translate: 0 1px;
+}
+
+.btn--default {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.btn--default:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--primary) 84%, transparent);
+}
+
+.btn--outline {
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+.btn--outline:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--input) 50%, transparent);
+}
+
+.btn--secondary {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.btn--secondary:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--secondary) 80%, transparent);
+}
+
+.btn--ghost {
+  color: var(--muted-foreground);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.btn--destructive {
+  background: color-mix(in oklch, var(--destructive) 10%, transparent);
+  color: var(--destructive);
+}
+
+.btn--destructive:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--destructive) 20%, transparent);
+}
+
+.btn--lg {
+  min-height: var(--control-lg);
+  padding-inline: 0.875rem;
+}
+
+.btn__spinner {
+  width: 0.75rem;
+  height: 0.75rem;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+/* Inputs signal focus by border colour alone; buttons by ring. */
+.field {
+  display: grid;
+  min-width: 0;
+  gap: 0.3125rem;
+}
+
+.field__label {
+  color: var(--fg-60);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.field__hint {
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--control);
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  /* `bg-input/20` light and `/30` dark both resolve to ~4% ink over the
+     surface, so one foreground-derived mix covers both themes. */
+  background: color-mix(in oklch, var(--foreground) 4%, transparent);
+  padding-inline: 0.5rem;
+  font-size: 0.75rem;
+  box-shadow: none;
+  transition: border-color var(--fast) var(--ease);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: color-mix(in oklch, var(--muted-foreground) 75%, transparent);
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.textarea {
+  display: block;
+  padding-block: 0.4375rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.select {
+  appearance: none;
+  padding-right: 1.5rem;
+}
+
+.input-group {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.input-group--select::after {
+  content: "";
+  position: absolute;
+  right: 0.5rem;
+  width: 0.625rem;
+  height: 0.625rem;
+  pointer-events: none;
+  background: var(--muted-foreground);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m2 4.5 4 4 4-4'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+.input-group__prefix {
+  position: absolute;
+  left: 0.625rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+.input-group--prefix .input {
+  padding-left: 2rem;
+}
+
+/* Display-scale inputs: the two moments the instrument raises its voice. */
+.input--display {
+  min-height: var(--control-lg);
+  font-family: var(--font-mono);
+  font-size: 1.125rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.input--display::-webkit-outer-spin-button,
+.input--display::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.input--otp {
+  letter-spacing: 0.32em;
+}
+
+.card {
+  overflow: hidden;
+  border: 1px solid var(--fg-10);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  padding: 1rem;
+}
+
+.card__head {
+  display: flex;
+  min-height: var(--control);
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.card__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.card__body {
+  display: grid;
+  gap: 0.875rem;
+  padding-top: 0.875rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.1875rem 0.4375rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge::before {
+  content: "";
+  width: 0.3125rem;
+  height: 0.3125rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge--neutral {
+  color: var(--muted-foreground);
+}
+
+.badge--info {
+  color: var(--fg-60);
+}
+
+.badge--success {
+  border-color: color-mix(in oklch, var(--accent-foreground) 24%, transparent);
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* "Not settled yet" is a neutral-but-present state, so it borrows weight from
+   the foreground rather than a second hue. `--primary` stays action-only. */
+.badge--warning {
+  border-color: var(--fg-40);
+  color: var(--foreground);
+}
+
+.badge--danger {
+  border-color: color-mix(in oklch, var(--destructive) 30%, transparent);
+  background: color-mix(in oklch, var(--destructive) 10%, transparent);
+  color: var(--destructive);
+}
+
+/* Key/value grid — every metadata read-out in the app. */
+.kv {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--border);
+}
+
+.kv__item {
+  min-width: 0;
+  background: var(--card);
+  padding: 0.5rem 0.625rem;
+}
+
+.kv__key {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.kv__value {
+  margin-top: 0.1875rem;
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kv__value--mono {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  color: var(--fg-60);
+  font-size: 0.75rem;
+  line-height: 1.625;
+  text-wrap: pretty;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.actions--split {
+  justify-content: space-between;
+}
+
+/* Progressive disclosure for the two surfaces that are optional rather than
+   sequential: the Shopee cookie import and the runtime log. */
+.disclosure {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.disclosure > summary {
+  display: flex;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-inline: 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  list-style: none;
+}
+
+.disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.disclosure__count {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.disclosure__marker {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1;
+  transition: rotate var(--fast) var(--ease);
+}
+
+.disclosure[open] .disclosure__marker {
+  rotate: 45deg;
+}
+
+.disclosure__body {
+  display: grid;
+  gap: 0.875rem;
+  border-top: 1px solid var(--border);
+  padding: 0.875rem;
+}
+
+.disclosure--panel {
+  border-color: var(--fg-10);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+}
+
+.disclosure--panel > summary {
+  min-height: 2.5rem;
+  padding-inline: 1rem;
+}
+
+/* ------------------------------------------------------------------- shell */
+
+.lab {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+}
+
+.lab[aria-busy="true"] {
+  cursor: progress;
+}
+
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 50%;
+  z-index: var(--z-skip);
+  display: inline-flex;
+  min-height: var(--control-lg);
+  align-items: center;
+  translate: -50% -200%;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  padding-inline: 0.875rem;
+  color: var(--primary-foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: translate var(--fast) var(--ease);
+}
+
+.skip-link:focus {
+  translate: -50% 0;
+}
+
+.topbar {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brand__mark {
+  display: grid;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--fg-10);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1;
+}
+
+.brand__name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+
+/* Theme control: a segmented mono switch, not a sun/moon toggle. */
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--border);
+}
+
+.theme-switch__option {
+  min-height: 1.375rem;
+  border: 0;
+  background: var(--background);
+  padding-inline: 0.4375rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: background-color var(--fast) var(--ease),
+    color var(--fast) var(--ease);
+}
+
+.theme-switch__option:hover:not([aria-pressed="true"]) {
+  color: var(--foreground);
+}
+
+.theme-switch__option[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+/* One line, not a banner. */
+.alert {
+  margin-top: 0.75rem;
+  color: var(--destructive);
+  font-size: 0.6875rem;
+  letter-spacing: 0.01em;
+}
+
+.alert::before {
+  content: "● ";
+  font-size: 0.5rem;
+  vertical-align: 0.15em;
+}
+
+/* Provider switch stays reachable while scrolling. Backdrop blur is the only
+   "lift" this system allows. */
+.provider-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin-top: 0.75rem;
+  background: color-mix(in oklch, var(--background) 82%, transparent);
+  backdrop-filter: blur(12px);
+  padding-block: 0.5rem;
+}
+
+.provider-bar::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background-image: var(--dash);
+}
+
+.provider-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--border);
+}
+
+.provider-switch__tab {
+  display: inline-flex;
+  min-height: var(--control);
+  align-items: center;
+  gap: 0.4375rem;
+  border: 0;
+  background: var(--card);
+  padding-inline: 0.75rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: background-color var(--fast) var(--ease),
+    color var(--fast) var(--ease);
+}
+
+.provider-switch__tab:hover:not([aria-selected="true"]):not(:disabled) {
+  color: var(--foreground);
+}
+
+.provider-switch__tab[aria-selected="true"] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.provider-switch__dot {
+  width: 0.3125rem;
+  height: 0.3125rem;
+  border-radius: 50%;
+  background: var(--fg-40);
+}
+
+.provider-switch__dot[data-live="true"] {
+  background: currentColor;
+}
+
+/* ------------------------------------------------------------------ layout */
+
+.workspace {
+  flex: 1;
+}
+
+/* The panel remounts on every provider switch, so this is the system's one
+   reveal — 500ms, and it never drops below a readable opacity. */
+.panel {
+  animation: panel-in var(--slow) var(--ease) both;
+}
+
+.panel:focus {
+  outline: none;
+}
+
+.grid {
+  display: grid;
+  gap: 1.25rem;
+  align-items: start;
+  padding-block: 1.5rem;
+}
+
+.grid[data-columns="1"] {
+  max-width: 30rem;
+}
+
+.grid[data-columns="2"] {
+  grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+}
+
+.grid__rail {
+  align-self: stretch;
+  min-height: 100%;
+  background-image: var(--dash-y);
+}
+
+.section {
+  padding-bottom: 1.5rem;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  padding-block: 0.875rem 1.5rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.04em;
+}
+
+/* ---------------------------------------------------------------- features */
+
+/* Auth progress. A segmented rail, provider-shaped in length. */
+.stepper {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.375rem;
+}
+
+.stepper__step {
+  padding-top: 0.375rem;
+  border-top: 1px solid var(--rail);
+  transition: border-color var(--fast) var(--ease);
+}
+
+.stepper__label {
+  display: block;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.1em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: color var(--fast) var(--ease);
+}
+
+.stepper__step[data-state="done"] {
+  border-top-color: var(--fg-40);
+}
+
+.stepper__step[data-state="done"] .stepper__label {
+  color: var(--fg-60);
+}
+
+.stepper__step[data-state="current"] {
+  border-top-color: var(--primary);
+}
+
+.stepper__step[data-state="current"] .stepper__label {
+  color: var(--foreground);
+}
+
+.form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.form__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(7rem, 0.42fr);
+  gap: 0.625rem;
+}
+
+.form__footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.form__inline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.625rem;
+}
+
+/* Ledger */
+.ledger__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 0.75rem;
+  padding-top: 0.875rem;
+}
+
+.receipt {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  padding: 0.875rem;
+  transition: border-color var(--fast) var(--ease);
+}
+
+.receipt:hover {
+  border-color: var(--fg-40);
+}
+
+.receipt__head,
+.receipt__body {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.receipt__head {
+  align-items: flex-start;
+}
+
+.receipt__reference {
+  overflow-wrap: anywhere;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.receipt__amount {
+  min-width: 0;
+}
+
+.receipt__total {
+  display: block;
+  margin-block: 0.1875rem;
+  font-size: 1.375rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+.receipt__basis {
+  display: block;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* QR keeps a light field in both themes so it stays scannable. */
+.receipt__qr {
+  display: grid;
+  width: 5rem;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  padding: 0.25rem;
+}
+
+.receipt__qr img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.receipt .kv {
+  width: 100%;
+}
+
+/* Runtime log */
+.timeline {
+  max-height: 22rem;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding-inline: 0.75rem;
+}
+
+.timeline__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.625rem;
+  padding-block: 0.625rem;
+}
+
+.timeline__item + .timeline__item {
+  border-top: 1px solid var(--border);
+}
+
+.timeline__tone {
+  width: 0.375rem;
+  height: 0.375rem;
+  margin-top: 0.3125rem;
+  border-radius: 50%;
+  background: var(--muted-foreground);
+}
+
+.timeline__tone[data-tone="success"] {
+  background: var(--accent-foreground);
+}
+
+.timeline__tone[data-tone="warning"],
+.timeline__tone[data-tone="danger"] {
+  background: var(--destructive);
+}
+
+.timeline__event {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.timeline__message {
+  margin-top: 0.1875rem;
+  color: var(--fg-60);
+  font-size: 0.6875rem;
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.timeline__time {
+  display: block;
+  margin-top: 0.1875rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.06em;
+}
+
+/* Toasts */
+.toast-stack {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: var(--z-toast);
+  display: grid;
+  gap: 0.5rem;
+  width: min(calc(100% - 2rem), 22rem);
+}
+
+.toast {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklch, var(--popover) 92%, transparent);
+  backdrop-filter: blur(12px);
+  padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  animation: toast-in var(--fast) var(--ease) both;
+}
+
+.toast--error {
+  border-color: color-mix(in oklch, var(--destructive) 30%, transparent);
+  color: var(--destructive);
+}
+
+.toast__close {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1;
+  transition: background-color var(--fast) var(--ease),
+    color var(--fast) var(--ease);
+}
+
+.toast__close:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+/* Boot and 404 */
+.boot {
+  display: grid;
+  min-height: 100dvh;
+  align-content: center;
+  padding: 2rem 1.25rem;
+}
+
+.boot__inner {
+  display: grid;
+  width: min(100%, 30rem);
+  margin-inline: auto;
+  gap: 0.75rem;
+}
+
+.boot__title {
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.boot__body {
+  color: var(--fg-60);
+  font-size: 0.8125rem;
+  line-height: 1.625;
+  text-wrap: pretty;
+}
+
+.skeleton {
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    color-mix(in oklch, var(--muted) 45%, var(--background)) 50%,
+    var(--muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0.4;
+    translate: 0 4px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* -------------------------------------------------------------- responsive */
+
+@media (min-width: 640px) {
+  .shell {
+    width: min(100% - 2rem, 76rem);
+    padding-inline: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .shell {
+    padding-inline: 3rem;
+  }
+}
+
+@media (max-width: 1023px) {
+  .grid[data-columns="2"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .grid__rail {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .provider-switch {
+    display: flex;
+    width: 100%;
+  }
+
+  .provider-switch__tab {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .form__row,
+  .form__inline {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card__head,
+  .actions--split {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .form__inline .btn,
+  .actions--split > .btn {
+    width: 100%;
+  }
+
+  .receipt__body {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .receipt__qr {
+    width: 6.5rem;
+    align-self: center;
+  }
+
+  /* Five stacked hairlines read as a list, not as progress — keep the rail
+     horizontal and let the mono labels truncate. */
+  .stepper {
+    gap: 0.25rem;
+  }
+}
+
+/* Coarse pointers get comfortable hit areas; the instrument density is a
+   fine-pointer affordance, not a touch one. */
+@media (pointer: coarse) {
+  :root {
+    --control: 2.5rem;
+    --control-lg: 2.75rem;
+  }
+
+  .theme-switch__option {
+    min-height: 2rem;
+  }
+
+  .disclosure > summary {
+    min-height: 2.75rem;
+  }
+
+  .toast__close {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,7 @@
+# Local runtime state. May contain provider sessions, QRIS, and payment records.
+**/data/
+
+# TanStack Start / Nitro build output.
+web/.output/
+web/.nitro/
+web/.tanstack/
