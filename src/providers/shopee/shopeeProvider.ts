@@ -15,11 +15,7 @@ import type { Logger } from "../../utils/logger.js";
 import { noopLogger } from "../../utils/logger.js";
 import type { ShopeeApiLocale } from "./api.js";
 import { ShopeeAuthClient } from "./authClient.js";
-import {
-  SHOPEE_LIVE_TOKEN_COOKIE,
-  SHOPEE_PARTNER_BASE_URL,
-  SHOPEE_PROVIDER_ID,
-} from "./constants.js";
+import { SHOPEE_PROVIDER_ID } from "./constants.js";
 import { ShopeeCookieJar } from "./cookieJar.js";
 import { ShopeeHttpClient } from "./httpClient.js";
 import { ShopeeMerchantClient } from "./merchantClient.js";
@@ -297,85 +293,6 @@ export class ShopeeProvider implements MerchantProvider<ShopeeSession> {
           merchantId: input.merchantId,
           storeId: input.storeId,
         });
-      }),
-    );
-  }
-
-  /**
-   * Adopt a session obtained by logging in through Shopee's official website.
-   *
-   * Programmatic OTP login works when the request carries a signed device-risk
-   * token (see `ShopeeAuthClient.requestOtp`); this method is the alternative
-   * for merchants who prefer to log in on the official site and hand this tool
-   * the resulting dashboard token cookie
-   * (`__shopee_partner_website_x_token_live`). Discovery and the transaction
-   * feed authenticate with the merchant token carried inside that cookie and do
-   * not require the anti-bot signature, so the rest of the toolkit works.
-   */
-  async importSession(tokenCookie: string): Promise<ShopeeSession> {
-    return this.runPaymentTransition(() =>
-      this.withPaymentTransitionRollback(async () => {
-        const value = tokenCookie.trim();
-        if (!value) {
-          throw new ConfigError("Shopee session token is required");
-        }
-        // Seed the dashboard token cookie so the credential and discovery calls
-        // resolve exactly as they do after an OTP login.
-        this.http.cookieJar.restore([
-          ...this.http.cookieJar.snapshot(),
-          {
-            name: SHOPEE_LIVE_TOKEN_COOKIE,
-            value,
-            domain: new URL(SHOPEE_PARTNER_BASE_URL).hostname,
-            path: "/",
-            hostOnly: true,
-            secure: true,
-            httpOnly: true,
-          },
-        ]);
-
-        const credential = readShopeeMerchantCredential(this.http.cookieJar);
-        if (!credential.businessId) {
-          throw new ConfigError(
-            "Shopee session token does not identify a merchant",
-          );
-        }
-
-        const merchantClient = new ShopeeMerchantClient(this.http, {
-          token: credential.token,
-          merchantId: credential.businessId,
-          locale: this.locale,
-        });
-        const [profile, stores] = await Promise.all([
-          merchantClient.getProfile(),
-          merchantClient.listStores(),
-        ]);
-
-        const merchant = {
-          id: credential.businessId,
-          name: profile.merchantName,
-          status: 1,
-          staffUserId: Number(credential.accountId) || 0,
-          staffRole: 0,
-          staffStatus: 0,
-          isActive: true,
-          isBanned: false,
-          isCurrentLoginUser: true,
-        };
-        this.session = {
-          version: 1,
-          cookies: this.http.cookieJar.snapshot(),
-          accountId: credential.accountId,
-          merchant,
-          merchants: [{ ...merchant }],
-          stores,
-          storeId: chooseStoreId(stores, this.config.storeId, profile.storeId),
-          createdAt: Date.now(),
-          expiresAt: credential.expiresAt,
-        };
-        await this.persistSession();
-        this.activateCurrentComposition();
-        return this.exportSession();
       }),
     );
   }

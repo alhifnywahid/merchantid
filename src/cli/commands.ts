@@ -150,8 +150,8 @@ async function loginShopee(
     // A device-risk report can be supplied programmatically via
     // `ShopeeProvider({ deviceReport })`. The CLI does not ship one: Shopee
     // grades the report and may withhold OTP delivery for a request it does
-    // not recognise. If no code arrives, see `importSession()` in the README
-    // for adopting a session from a normal browser login instead.
+    // not recognise. Capture a report from your own browser and pass it if no
+    // code arrives.
     onSessionUpdated: async (session) => {
       updateProviderConfig("shopee", { session }, configPath);
     },

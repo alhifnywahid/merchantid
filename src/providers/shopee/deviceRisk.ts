@@ -25,12 +25,9 @@
  *    control — which may breach Shopee's terms and put the merchant account at
  *    risk of suspension.
  *
- * Prefer either of the honest alternatives:
- *
- * - Capture your own report from your own browser and pass it as
- *   `new ShopeeProvider({ deviceReport })`. The option accepts any string.
- * - Skip programmatic OTP entirely and adopt a session from a normal browser
- *   login with {@link ShopeeProvider.importSession}.
+ * Prefer the honest alternative: capture your own report from your own browser
+ * and pass it as `new ShopeeProvider({ deviceReport })`. The option accepts any
+ * string.
  *
  * This constant is exported because removing it would silently break existing
  * callers, not because replaying it is recommended.

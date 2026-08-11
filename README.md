@@ -195,18 +195,6 @@ const shopee = new ShopeeProvider({ deviceReport: reportFromYourBrowser });
 
 Tangkap laporan dari browser Anda sendiri. Paket ini juga mengekspor `SHOPEE_DEVICE_RISK_BLOB`, sebuah laporan hasil tangkapan satu mesin — memakainya berarti setiap pengguna melapor sebagai device yang sama, yang dapat ditautkan Shopee dan dapat diblokir sekaligus untuk semua orang. Lihat [Penafian](#penafian).
 
-Bila OTP tidak kunjung datang, gunakan `importSession()` di bawah.
-
-#### Mengadopsi sesi dari login browser
-
-Alternatif tanpa OTP sama sekali: login di situs resmi Shopee, salin cookie `__shopee_partner_website_x_token_live`, lalu serahkan ke library.
-
-```ts
-const session = await shopee.importSession(tokenCookieFromBrowser);
-```
-
-Discovery, feed transaksi, dan rekonsiliasi berjalan normal setelahnya. Sesi hasil impor tidak bisa berganti merchant atau diperbarui otomatis — keduanya butuh materi SSO yang hanya ada pada login OTP.
-
 #### Ganti merchant tanpa OTP baru
 
 Satu akun dapat mengakses beberapa merchant. `selectMerchant()` mencetak ulang token untuk merchant tujuan dengan mengulang pertukaran SSO login, tanpa OTP baru:
@@ -230,7 +218,7 @@ try {
 }
 ```
 
-Token berotasi setiap pembaruan, jadi `onSessionUpdated` wajib dipasang agar sesi tersimpan tidak menjadi basi. Sesi hasil `importSession()` dan sesi lama tanpa materi SSO akan menolak dengan `AUTH_REQUIRED`.
+Token berotasi setiap pembaruan, jadi `onSessionUpdated` wajib dipasang agar sesi tersimpan tidak menjadi basi. Sesi lama tanpa materi SSO akan menolak dengan `AUTH_REQUIRED`.
 
 ### CAPTCHA
 
@@ -574,7 +562,7 @@ Tidak berafiliasi dengan, didukung oleh, atau disponsori oleh Gojek, GoTo, Shope
 
 **Risiko ditanggung pengguna.** Library ini memakai endpoint privat yang tidak berdokumentasi. Memakainya dapat melanggar ketentuan layanan provider, dan provider dapat membatasi laju, menangguhkan, atau menutup akun merchant yang mengaksesnya secara otomatis — termasuk akun Anda sendiri. Baca ketentuan layanan provider dan putuskan sendiri. Perangkat lunak ini disediakan "sebagaimana adanya", tanpa jaminan apa pun; seluruh risiko dan tanggung jawab atas penggunaannya ada pada Anda (lihat [LICENSE](LICENSE)).
 
-Perhatian khusus pada `SHOPEE_DEVICE_RISK_BLOB`: konstanta itu adalah laporan device-risk hasil tangkapan satu mesin. Memakainya berarti melaporkan identitas device yang bukan milik Anda kepada sistem anti-fraud Shopee, yang secara substansi adalah menyiasati kontrol tersebut. Tangkap laporan dari browser Anda sendiri, atau pakai `importSession()`.
+Perhatian khusus pada `SHOPEE_DEVICE_RISK_BLOB`: konstanta itu adalah laporan device-risk hasil tangkapan satu mesin. Memakainya berarti melaporkan identitas device yang bukan milik Anda kepada sistem anti-fraud Shopee, yang secara substansi adalah menyiasati kontrol tersebut. Tangkap laporan dari browser Anda sendiri.
 
 Library tidak berusaha melewati CAPTCHA.
 

@@ -96,8 +96,7 @@ export class ShopeeCookieJar {
       if (!cookie.name || !cookie.domain || !cookie.path) continue;
       // `;` is rejected in the value too, not just the name: `getCookieHeader`
       // joins pairs with "; ", so a value containing a semicolon would inject
-      // additional cookies into every outgoing request. Reachable through
-      // `importSession()`, where the value comes from a string the user pasted.
+      // additional cookies into every outgoing request.
       if (/[\r\n;]/.test(cookie.name) || /[\r\n;]/.test(cookie.value)) continue;
       this.upsert(cloneCookie(cookie));
     }
