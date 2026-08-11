@@ -1,0 +1,67 @@
+---
+title: "Logging"
+description: "Interface Logger, logger console bawaan, dan aturan agar kredensial tidak bocor ke log."
+---
+
+MerchantId memakai interface `Logger` minimal dengan default no-op. Library tidak pernah memakai `console` langsung; semua diagnostik lewat logger yang dapat Anda injeksikan.
+
+## Interface Logger
+
+```ts
+type LogLevel = "debug" | "info" | "warn" | "error";
+
+interface Logger {
+  debug(message: string, meta?: Record<string, unknown>): void;
+  info(message: string, meta?: Record<string, unknown>): void;
+  warn(message: string, meta?: Record<string, unknown>): void;
+  error(message: string, meta?: Record<string, unknown>): void;
+}
+```
+
+Injeksikan lewat `logger` pada config provider atau `PaymentService`.
+
+## Default no-op
+
+Tanpa logger, library memakai `noopLogger` yang membuang semua pesan. Ini default yang aman: tidak ada output tak terduga di produksi.
+
+```ts
+import { noopLogger } from "merchantid";
+```
+
+## Logger console
+
+`createConsoleLogger(minLevel)` mengembalikan logger console yang menghormati ambang level minimum. Prefix log adalah `[merchantid]`.
+
+```ts
+import { createConsoleLogger, GopayProvider } from "merchantid";
+
+const gopay = new GopayProvider({
+  logger: createConsoleLogger("warn"),
+});
+```
+
+Level di bawah `minLevel` diabaikan. Urutan level: `debug` (10) < `info` (20) < `warn` (30) < `error` (40). Level `debug` dipetakan ke `console.log`; sisanya ke `console[level]` yang sesuai.
+
+## Aturan: jangan bocorkan kredensial
+
+<Warning>
+  Jangan pernah menulis token, cookie, OTP, challenge, QRIS asli, atau
+  credential ke log. Library sudah menjaga ini: `HttpClient` mendeskripsikan
+  request hanya sebagai host + path (bukan URL penuh yang bisa memuat query
+  string sensitif), dan `HttpError` menyimpan body respons secara non-enumerable
+  agar tidak tercetak `console.error`. Logger Anda tidak boleh mengembalikan
+  disiplin ini. Lihat [Keamanan](/security/overview).
+</Warning>
+
+Untuk diagnostik CLI, set env `MERCHANTID_DEBUG`. Debug CLI tetap tidak boleh mencetak token, cookie, OTP, atau QRIS - ia hanya menampilkan sinyal ada/tidak (misalnya "OTP challenge received: yes").
+
+## Level yang dipakai library
+
+- `debug`: detail request (host+path), refresh token, retry.
+- `info`: siklus pembayaran (created, settled, expired), polling start/stop, sinyal OTP.
+- `warn`: cap halaman feed tercapai, row Shopee malformed diabaikan, kegagalan resolusi merchant/QRIS yang tidak fatal.
+- `error`: tick gagal, listener melempar, refresh token gagal.
+
+## Referensi
+
+Lihat [Referensi API tipe](/api/types#logger) untuk tipe `Logger` dan `LogLevel`.

@@ -1,0 +1,89 @@
+---
+title: "Komposisi multi-provider"
+description: "MerchantId sebagai registry dan composition root untuk beberapa provider di satu aplikasi."
+---
+
+`MerchantId` adalah registry dan composition root. Ia tidak menyamakan alur login provider yang memang berbeda: login, discovery merchant/store, transaksi, dan pembayaran tetap dipanggil pada adapter konkret. Yang ditangani registry adalah pendaftaran, pemilihan default, status ringkas, dan ekspor sesi.
+
+## Mendaftarkan provider
+
+```ts
+import { MerchantId, GopayProvider, ShopeeProvider } from "merchantid";
+
+const gopay = new GopayProvider({
+  merchantId: "G000000001",
+  staticQris: process.env.GOPAY_STATIC_QRIS,
+  session: gopaySession,
+});
+
+const shopee = new ShopeeProvider({
+  merchantId: "123456789",
+  storeId: "987654321",
+  staticQris: process.env.SHOPEE_STATIC_QRIS,
+  staticQrisScope: {
+    merchantId: "123456789",
+    storeId: "987654321",
+  },
+  session: shopeeSession,
+});
+
+const merchantid = new MerchantId({
+  providers: [gopay, shopee],
+  defaultProviderId: "gopay",
+});
+
+console.log(merchantid.listProviders());
+const active = merchantid.getProvider();
+console.log(active.providerId, active.authenticated);
+```
+
+`createMerchantId(config)` adalah alias fungsi untuk `new MerchantId(config)`.
+
+## Kontrak MerchantProvider
+
+Registry hanya menyentuh permukaan kecil yang dimiliki setiap facade provider. Detail autentikasi sengaja tetap provider-specific.
+
+```ts
+interface MerchantProvider<TSession = SessionState> {
+  readonly providerId: string;
+  readonly authenticated: boolean;
+  readonly staticQris?: string;
+  getPaymentScope(): PaymentScope | undefined;
+  exportSession(): TSession;
+}
+```
+
+`GopayProvider` dan `ShopeeProvider` memenuhi kontrak ini sekaligus mengekspos method login, discovery, dan payment masing-masing.
+
+## Registry API
+
+| Method                     | Kegunaan                                                                    |
+| -------------------------- | --------------------------------------------------------------------------- |
+| `register(provider)`       | Daftarkan adapter; `providerId` wajib huruf kecil, angka, dan tanda hubung  |
+| `has(providerId)`          | Cek apakah provider terdaftar                                               |
+| `getProvider(providerId?)` | Ambil provider; tanpa argumen mengembalikan default                         |
+| `setDefaultProvider(id)`   | Pilih provider default                                                      |
+| `defaultProviderId`        | Getter id provider default                                                  |
+| `listProviders()`          | Ringkasan setiap provider: `authenticated`, `paymentScope`, `hasStaticQris` |
+| `exportSessions()`         | Kumpulkan sesi setiap provider yang terautentikasi                          |
+
+Provider pertama yang didaftarkan otomatis menjadi default sampai `setDefaultProvider` dipanggil. Mendaftarkan id yang sama dua kali, atau memilih provider yang belum terdaftar, melempar `ConfigError`.
+
+## Ekspor sesi
+
+`exportSessions()` mengembalikan `Record<string, unknown>` berisi sesi setiap provider yang sedang terautentikasi. Nilai per provider adalah tipe sesi native-nya (`SessionState` untuk GoPay, `ShopeeSession` untuk Shopee). Perlakukan seluruh objek ini sebagai kredensial: simpan di secret store, jangan tulis ke log atau kirim ke browser.
+
+## Batas desain
+
+Registry sengaja tidak memaksakan login universal. Login, discovery merchant/store, transaksi, dan pembayaran tetap dipanggil pada adapter konkret agar detail provider tidak bocor ke core. `core` tidak mengetahui `next_position` Shopee, cookie, GoID grant, atau payload GoBiz. Lihat [Referensi API `MerchantId`](/api/merchantid).
+
+## Langkah berikutnya
+
+<CardGroup cols={2}>
+  <Card title="GoPay Merchant" icon="wallet" href="/gopay/overview">
+    Adapter GoPay lengkap.
+  </Card>
+  <Card title="Shopee Merchant" icon="bag-shopping" href="/shopee/overview">
+    Adapter Shopee lengkap.
+  </Card>
+</CardGroup>

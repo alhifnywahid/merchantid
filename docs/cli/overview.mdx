@@ -1,0 +1,118 @@
+---
+title: "Ikhtisar CLI"
+description: "Binary merchantid: login, inspeksi sesi, pemilihan merchant/store, dan binding QRIS untuk semua provider."
+---
+
+MerchantId menyertakan satu binary CLI, `merchantid`, untuk login, inspeksi sesi, pemilihan merchant/store, dan binding QRIS statis - tanpa menulis kode.
+
+```bash
+npx merchantid help
+```
+
+## Perintah
+
+```bash
+merchantid login [gopay|shopee]
+merchantid session [gopay|shopee]
+merchantid session [gopay|shopee] --reveal
+merchantid merchants [gopay|shopee]
+merchantid stores [gopay|shopee]
+merchantid whoami
+merchantid set-provider <gopay|shopee>
+merchantid set-merchant <merchantId> --provider gopay
+merchantid set-store <storeId>
+merchantid set-qris [gopay|shopee]
+```
+
+| Perintah                      | Kegunaan                                             |
+| ----------------------------- | ---------------------------------------------------- |
+| `login [provider]`            | Login OTP interaktif                                 |
+| `session [provider]`          | Tampilkan sesi tersimpan yang ter-mask               |
+| `session [provider] --reveal` | Tampilkan sesi tanpa mask (hanya di terminal privat) |
+| `merchants [provider]`        | Daftar merchant dan outlet/store                     |
+| `stores [provider]`           | Alias untuk listing outlet/store                     |
+| `whoami`                      | Status ter-redaksi untuk semua provider              |
+| `set-provider <id>`           | Set provider default                                 |
+| `set-merchant <id>`           | Set merchant default GoPay (`--provider gopay`)      |
+| `set-store <id>`              | Set store default Shopee                             |
+| `set-qris [provider]`         | Prompt QRIS statis secara aman                       |
+
+## Login
+
+```bash
+npx merchantid login gopay
+npx merchantid login shopee
+```
+
+- **GoPay:** meminta nomor telepon dan country code, lalu OTP.
+- **Shopee:** meminta nomor internasional dan password (opsional), lalu OTP; bila multi-merchant, menampilkan pilihan merchant usable, lalu pilihan store bila perlu.
+
+Provider pertama yang login menjadi default bila belum ada. Lihat [Login GoPay](/gopay/login) dan [Login Shopee](/shopee/login).
+
+## Inspeksi sesi
+
+```bash
+npx merchantid session gopay
+npx merchantid whoami
+```
+
+`session` menampilkan sesi tersimpan dengan seluruh kredensial ter-mask secara default. `--reveal` menampilkan nilai penuh dan hanya boleh dipakai di terminal privat. `whoami` menampilkan lokasi config dan state ter-redaksi tiap provider (login atau tidak, jumlah merchant, apakah QRIS terikat).
+
+<Warning>
+  `session --reveal` mencetak token, cookie, dan `switchCredential`. Jalankan
+  hanya di terminal privat. Untuk Shopee, `switchCredential` juga di-mask tanpa
+  `--reveal` karena dapat mencetak token merchant tanpa OTP kedua.
+</Warning>
+
+## Binding QRIS
+
+```bash
+npx merchantid set-qris gopay
+npx merchantid set-qris shopee
+```
+
+Memvalidasi checksum dan menjalankan `staticToDynamicQris` sebelum menyimpan. Untuk Shopee, store harus terpilih lebih dulu; QRIS disimpan bersama owner (`staticQrisScope`). Lihat [Pembayaran Shopee](/shopee/payments).
+
+## Lokasi konfigurasi
+
+Lokasi default adalah `~/.merchantid/config.json`. Gunakan env `MERCHANTID_CONFIG` untuk memilih lokasi lain. File harus mengikuti schema version 1:
+
+```jsonc
+{
+  "version": 1,
+  "defaultProvider": "shopee",
+  "providers": {
+    "gopay": {
+      "session": { "tokens": {}, "deviceId": "..." },
+      "merchants": [],
+      "defaultMerchantId": "G000000001",
+      "staticQris": "000201...",
+    },
+    "shopee": {
+      "session": { "version": 1, "cookies": [], "merchant": {}, "stores": [] },
+      "staticQris": "000201...",
+      "staticQrisScope": {
+        "merchantId": "123456789",
+        "storeId": "987654321",
+      },
+    },
+  },
+}
+```
+
+<Warning>
+  File config memuat kredensial dan tidak boleh dikomit. `session` GoPay memuat
+  access/refresh token; sesi Shopee memuat cookie yang dapat memberi akses
+  merchant. QRIS Shopee juga sensitif dan metadata owner-nya mencegah payload
+  dipakai pada store berbeda. Jangan menyalin konfigurasi asli ke issue. Contoh
+  di atas sengaja tanpa trailing comma: file dibaca dengan `JSON.parse`,
+  sehingga koma di akhir ditolak.
+</Warning>
+
+## Debug
+
+Set env `MERCHANTID_DEBUG` untuk diagnostik umum. Output debug tidak mencetak token, cookie, OTP, atau QRIS - hanya sinyal ada/tidak. Lihat [Logging](/concepts/logging).
+
+## Referensi
+
+Lihat [Keamanan](/security/overview) untuk penanganan kredensial dan [Bantuan](/troubleshooting/overview) bila menemui masalah.

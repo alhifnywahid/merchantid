@@ -1,0 +1,129 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "MerchantId",
+  "description": "Toolkit payment-provider TypeScript untuk merchant Indonesia: QRIS dinamis per pesanan dan rekonsiliasi settlement untuk GoPay Merchant dan ShopeePay Merchant.",
+  "colors": {
+    "primary": "#0EA66B",
+    "light": "#57C99A",
+    "dark": "#0B0D0C"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Panduan",
+        "groups": [
+          {
+            "group": "Pendahuluan",
+            "icon": "book-open",
+            "pages": [
+              "guide/introduction",
+              "guide/installation",
+              "guide/quickstart",
+              "guide/concepts",
+              "guide/multi-provider"
+            ]
+          },
+          {
+            "group": "Konsep lintas provider",
+            "icon": "diagram-project",
+            "pages": [
+              "concepts/qris",
+              "concepts/payments",
+              "concepts/payment-store",
+              "concepts/errors",
+              "concepts/logging"
+            ]
+          },
+          {
+            "group": "CLI",
+            "icon": "terminal",
+            "pages": ["cli/overview"]
+          },
+          {
+            "group": "Keamanan",
+            "icon": "shield-halved",
+            "pages": ["security/overview"]
+          },
+          {
+            "group": "Bantuan",
+            "icon": "circle-question",
+            "pages": ["troubleshooting/overview", "troubleshooting/faq"]
+          }
+        ]
+      },
+      {
+        "tab": "GoPay",
+        "groups": [
+          {
+            "group": "GoPay Merchant",
+            "icon": "wallet",
+            "pages": [
+              "gopay/overview",
+              "gopay/login",
+              "gopay/merchants",
+              "gopay/payments"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Shopee",
+        "groups": [
+          {
+            "group": "Shopee Merchant",
+            "icon": "bag-shopping",
+            "pages": [
+              "shopee/overview",
+              "shopee/login",
+              "shopee/merchants-stores",
+              "shopee/payments",
+              "shopee/sessions",
+              "shopee/device-risk"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Referensi API",
+        "groups": [
+          {
+            "group": "Referensi API",
+            "icon": "code",
+            "pages": [
+              "api/overview",
+              "api/merchantid",
+              "api/gopay-provider",
+              "api/shopee-provider",
+              "api/payment-service",
+              "api/qris",
+              "api/errors",
+              "api/types"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "npm",
+        "href": "https://www.npmjs.com/package/merchantid"
+      }
+    ],
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/alhifnywahid/merchantid"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/alhifnywahid/merchantid"
+    }
+  },
+  "search": {
+    "prompt": "Cari dokumentasi MerchantId"
+  }
+}

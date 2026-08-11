@@ -1,0 +1,85 @@
+---
+title: "Utilitas QRIS"
+description: "Parse dan build EMVCo/TLV, konversi QRIS statis menjadi dinamis, dan verifikasi CRC."
+---
+
+MerchantId menyediakan toolkit QRIS berbasis EMVCo TLV. Inti pekerjaannya: mengubah QRIS statis merchant menjadi QRIS dinamis yang membawa nominal per pesanan, dengan CRC yang dihitung ulang.
+
+## Konversi statis menjadi dinamis
+
+`staticToDynamicQris(staticPayload, amount)` adalah fungsi yang dipakai `PaymentService` untuk tiap pembayaran.
+
+```ts
+import { isValidQrisChecksum, parseEmv, staticToDynamicQris } from "merchantid";
+
+const dynamic = staticToDynamicQris(staticPayload, 10_001);
+isValidQrisChecksum(dynamic); // true
+parseEmv(dynamic).get("54"); // "10001"
+```
+
+Yang dilakukan fungsi ini:
+
+1. Memvalidasi checksum sumber lebih dulu. Fungsi ini menghitung CRC baru atas payload apa pun yang diberikan, jadi payload rusak atau hasil edit tangan - PAN merchant yang tertukar, misalnya - akan diterbitkan ulang sebagai QR valid yang mengarahkan pembayaran ke pihak lain. Checksum adalah satu-satunya sinyal integritas, jadi dicek di titik tunggal tempat payload statis menjadi payable.
+2. Menyuntikkan tag `54` (transaction amount) dengan nominal.
+3. Membalik tag `01` (point-of-initiation) dari statis (`11`) ke dinamis (`12`).
+4. Menghitung ulang CRC dan menyusun payload dalam urutan tag menaik.
+
+Nominal wajib bilangan bulat positif; selain itu fungsi melempar `MerchantIdError` dengan code `QRIS_PARSE_ERROR`.
+
+## Parse dan build EMV
+
+`parseEmv(payload)` mengurai payload menjadi `EmvTlvMap` (map tag ke nilai mentah). Panjang EMVCo dihitung dalam **byte** UTF-8, bukan karakter JavaScript, sehingga nama merchant non-ASCII tetap terurai benar.
+
+```ts
+import { parseEmv, buildEmv, encodeTlv } from "merchantid";
+
+const map = parseEmv(staticPayload);
+map.get("00"); // payload format indicator
+```
+
+`buildEmv(map)` menyusun ulang payload dari map dan menambahkan CRC segar. Tag diemit dalam urutan numerik menaik, kecuali tag CRC yang selalu terakhir sesuai spesifikasi.
+
+`encodeTlv(tag, value)` menserialkan satu elemen TLV dengan panjang dua digit (diukur dalam byte). Nilai lebih dari 99 byte ditolak karena tidak dapat dinyatakan dalam panjang dua digit.
+
+<Warning>
+  Parser menolak payload malformed dan panjang yang keluar dari batas dengan
+  `QRIS_PARSE_ERROR`. Tanpa penjagaan itu, payload terpotong akan "berhasil"
+  diparse lalu diterbitkan ulang di bawah CRC yang baru dihitung - data merchant
+  korup yang memakai checksum valid.
+</Warning>
+
+## Verifikasi checksum
+
+`isValidQrisChecksum(payload)` memvalidasi CRC trailing (4 karakter terakhir) terhadap sisa payload menggunakan CRC-16/CCITT-FALSE.
+
+```ts
+import { isValidQrisChecksum, crc16ccitt } from "merchantid";
+
+isValidQrisChecksum(payload); // boolean
+crc16ccitt("00020101..."); // "A1B2" (uppercase hex)
+```
+
+`crc16ccitt(input)` mengekspos algoritma CRC-16/CCITT-FALSE langsung bila Anda membutuhkannya.
+
+## Tag EMV yang dipakai
+
+`QRIS_TAGS` mengekspos konstanta tag agar tidak ada string ajaib di kode pemanggil.
+
+```ts
+import { QRIS_TAGS } from "merchantid";
+
+QRIS_TAGS.payloadFormat; // "00"
+QRIS_TAGS.pointOfInitiation; // "01"
+QRIS_TAGS.transactionAmount; // "54"
+QRIS_TAGS.crc; // "63"
+QRIS_TAGS.poiStatic; // "11"
+QRIS_TAGS.poiDynamic; // "12"
+```
+
+## Catatan keamanan
+
+Jangan menulis payload QRIS mentah ke log atau output diagnostik. Payload dinamis membawa nominal yang menautkan pesanan, dan QRIS Shopee terikat ke store tertentu lewat metadata owner-nya. Lihat [Keamanan](/security/overview).
+
+## Referensi
+
+Lihat [Referensi API QRIS](/api/qris) untuk tanda tangan lengkap tiap fungsi.

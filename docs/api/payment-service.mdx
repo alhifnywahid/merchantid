@@ -1,0 +1,115 @@
+---
+title: "PaymentService"
+description: "Orkestrasi inti: buat pembayaran nominal unik, polling feed, settle atau expire, dan event."
+---
+
+`PaymentService` adalah mesin rekonsiliasi. Ia membuat pembayaran dengan nominal unik, menurunkan QRIS dinamis, memindai feed transaksi, lalu menyelesaikan (settle) atau kedaluwarsakan (expire) pembayaran. Biasanya Anda mengaksesnya lewat `provider.payments()`, bukan mengonstruksinya langsung.
+
+```ts
+const service = gopay.payments();
+service.on("paid", (p) => console.log("lunas", p.id));
+service.start();
+const payment = await service.createPayment({ amount: 25000 });
+```
+
+## PaymentServiceOptions
+
+| Opsi                  | Tipe                | Default                         | Kegunaan                                                                                      |
+| --------------------- | ------------------- | ------------------------------- | --------------------------------------------------------------------------------------------- |
+| `merchantId`          | `string`            | wajib                           | Merchant id pemilik pembayaran                                                                |
+| `scope`               | `PaymentScope`      | `{provider:"gopay",merchantId}` | Kepemilikan untuk isolasi di store bersama; `scope.merchantId` wajib sama dengan `merchantId` |
+| `store`               | `PaymentStore`      | wajib                           | Backend penyimpanan pembayaran                                                                |
+| `transactions`        | `TransactionLister` | -                               | Port transaksi offset-paginated (dipakai GoPay)                                               |
+| `transactionFeed`     | `TransactionFeed`   | -                               | Feed ternormalisasi (dipakai Shopee)                                                          |
+| `staticQris`          | `string`            | -                               | QRIS statis untuk turunan QRIS dinamis per order                                              |
+| `allocator`           | `AmountAllocator`   | `new AmountAllocator()`         | Alokator offset nominal unik                                                                  |
+| `pollIntervalMs`      | `number`            | `3000`                          | Interval polling background                                                                   |
+| `defaultExpiryMs`     | `number`            | `300000` (5 menit)              | Masa berlaku default pembayaran                                                               |
+| `clockSkewMs`         | `number`            | `60000` (1 menit)               | Toleransi skew jam untuk matching, grace, dan karantina                                       |
+| `transactionPageSize` | `number`            | `50`                            | Ukuran halaman feed (dibatasi maksimum 100)                                                   |
+| `logger`              | `Logger`            | `noopLogger`                    | Logger terstruktur                                                                            |
+| `lifecycleToken`      | `object`            | -                               | Dipakai facade provider yang menahan service lintas scope                                     |
+
+<Note>
+  Konstruktor melempar `CONFIG_INVALID` bila `transactions` maupun
+  `transactionFeed` tak diberikan, atau bila `scope.merchantId` tidak sama
+  dengan `merchantId`.
+</Note>
+
+## CreatePaymentInput
+
+```ts
+interface CreatePaymentInput {
+  amount: number; // base amount dalam rupiah penuh (integer positif)
+  reference?: string; // referensi internal (order id, dll.)
+  expiresInMs?: number; // override masa berlaku, harus finite
+  metadata?: Record<string, unknown>;
+}
+```
+
+## Metode
+
+| Metode                     | Kembalian                                          | Kegunaan                                               |
+| -------------------------- | -------------------------------------------------- | ------------------------------------------------------ |
+| `createPayment(input)`     | `Promise<Payment>`                                 | Buat pembayaran pending nominal unik + QRIS (bila ada) |
+| `getPayment(id)`           | `Promise<Payment \| undefined>`                    | Ambil pembayaran milik scope ini                       |
+| `cancelPayment(id)`        | `Promise<Payment \| undefined>`                    | Batalkan pembayaran pending, lepas slot nominal        |
+| `tick()`                   | `Promise<{ paid: Payment[]; expired: Payment[] }>` | Satu putaran rekonsiliasi manual                       |
+| `start()`                  | `void`                                             | Mulai polling background (aman dipanggil sekali)       |
+| `stop()`                   | `void`                                             | Hentikan polling background                            |
+| `setStaticQris(qris)`      | `void`                                             | Set/lepas QRIS statis                                  |
+| `setTransactionFeed(feed)` | `void`                                             | Ganti kredensial transport tanpa membuang replay guard |
+| `get hasStaticQris`        | `boolean`                                          | Apakah QRIS statis dikonfigurasi                       |
+| `get isRunning`            | `boolean`                                          | Apakah polling terjadwal                               |
+| `get isActive`             | `boolean`                                          | Apakah service memegang lifecycle scope-nya            |
+| `activate(token?)`         | `void`                                             | Aktifkan ulang service yang ditahan                    |
+| `deactivate(token?)`       | `Promise<boolean>`                                 | Cegah alokasi/rekonsiliasi baru dan tuntaskan antrian  |
+
+`createPayment` memvalidasi `amount` sebagai integer positif dan `expiresInMs` sebagai angka finite; keduanya melempar `CONFIG_INVALID` bila invalid. Panggilan konkuren diserialisasi lewat write queue agar tidak ada dua order menerima nominal sama.
+
+## Event
+
+`PaymentService` adalah event emitter dengan peta terketik:
+
+```ts
+interface PaymentServiceEvents {
+  paid: [Payment];
+  expired: [Payment];
+  error: [Error];
+}
+
+service.on("paid", (payment) => {
+  /* ... */
+});
+service.on("expired", (payment) => {
+  /* ... */
+});
+service.on("error", (err) => {
+  /* ... */
+});
+```
+
+Listener yang melempar tidak menghentikan `tick()`; error-nya dialihkan ke channel `error` (kecuali listener `error` itu sendiri, agar tidak rekursif). Tersedia `on`, `once`, `off`, dan `removeAllListeners`.
+
+## Urutan rekonsiliasi
+
+`tick()` menjalankan matching **sebelum** expiry secara sengaja: feed mengindeks transaksi dengan jeda, sehingga pembayar yang membayar dalam jendela bisa muncul setelah `expiresAt` lewat. Pembayaran baru di-expire setelah `expiresAt + clockSkewMs` - persis saat matcher berhenti menerima transaksi untuknya. Nominal yang dibebaskan masuk karantina `2 x clockSkewMs`, dan transaksi yang sudah settle diingat lintas tick agar tak menyelesaikan pembayaran kedua. Lihat [Model pembayaran](/concepts/payments).
+
+## Pencocokan
+
+Fungsi murni yang diekspos untuk pengujian dan penggunaan lanjutan:
+
+```ts
+function matchesPayment(
+  payment: Payment,
+  transaction: MerchantTransaction,
+  clockSkewMs: number,
+): boolean;
+function reconcile(
+  payments: Payment[],
+  transactions: MerchantTransaction[],
+  clockSkewMs: number,
+): Array<{ payment: Payment; transaction: MerchantTransaction }>;
+```
+
+`reconcile` menjamin at-most-one settlement per transaksi dalam satu pemanggilan. Lihat [Model pembayaran](/concepts/payments#aturan-pencocokan) dan [QRIS dan alokasi](/api/qris#amountallocator).

@@ -1,0 +1,94 @@
+---
+title: "Merchant dan store Shopee"
+description: "Discovery merchant/store, ganti merchant tanpa OTP baru, dan pemilihan store."
+---
+
+Satu akun Shopee dapat mengakses beberapa business merchant, dan tiap merchant dapat memiliki beberapa store. Scope pembayaran Shopee memakai business merchant sebagai `accountId` dan store terpilih sebagai `merchantId`.
+
+## Merchant yang dapat diakses
+
+```ts
+const merchants = shopee.merchants; // dari sesi login
+const active = shopee.activeMerchant; // merchant aktif saat ini
+```
+
+`shopee.merchants` mengembalikan `ShopeeMerchantSummary[]` - setiap business merchant yang dapat ditukar sesi. `activeMerchant` adalah merchant aktif, atau `undefined` bila belum terautentikasi.
+
+```ts
+interface ShopeeMerchantSummary {
+  id: string;
+  name: string;
+  status: number;
+  staffUserId: number;
+  staffRole: number;
+  staffStatus: number;
+  isActive: boolean;
+  isBanned: boolean;
+  isCurrentLoginUser: boolean;
+}
+```
+
+## Ganti merchant tanpa OTP baru
+
+`selectMerchant()` mencetak ulang token untuk merchant tujuan dengan mengulang pertukaran SSO login, tanpa OTP baru:
+
+```ts
+const session = await shopee.selectMerchant(targetMerchantId);
+```
+
+Store merchant tujuan ditemukan ulang otomatis. Penggantian ditolak selama scope aktif masih punya payment berjalan.
+
+<Note>
+  `SwitchMerchant` bawaan Shopee tidak dapat dipakai headless: token yang
+  dikembalikannya ditolak dashboard API (`200020`) di luar browser sungguhan.
+  Sebagai gantinya, `selectMerchant` mengulang rantai login token exchange
+  (`login_toc` → `/account/login/tob/auth`) untuk staff user id merchant tujuan,
+  memakai kembali `switchCredential` yang ditangkap saat login. Itu rantai yang
+  sama dengan login segar dan mencetak token yang diterima API. Sesi lama tanpa
+  `switchCredential` (mis. diimpor dari cookie mentah) tidak dapat berganti dan
+  harus login ulang.
+</Note>
+
+## Discovery dan pemilihan store
+
+```ts
+const stores = await shopee.listStores();
+```
+
+`listStores` mengembalikan seluruh store yang dimiliki merchant aktif. Query difilter oleh `serviceList` seperti yang dilakukan dashboard; bila filter itu tidak menemukan apa pun, query diulang tanpa filter agar store yang tidak membawa service tetap ditemukan.
+
+```ts
+interface ShopeeStore {
+  id: string;
+  name: string;
+  status: number;
+}
+```
+
+Pilih store aktif:
+
+```ts
+const session = await shopee.selectStore(storeId);
+```
+
+`selectStore` menolak perpindahan bila scope lama masih memiliki payment aktif. Setelah berpindah store, jalankan `set-qris shopee` atau `setStaticQris()` untuk store baru sebelum membuat QR payment - store lain tidak mewarisi QRIS lama. Lihat [Pembayaran Shopee](/shopee/payments).
+
+## CLI
+
+```bash
+npx merchantid merchants shopee
+npx merchantid stores shopee
+npx merchantid set-store <storeId>
+```
+
+`merchants shopee` dan `stores shopee` menampilkan merchant aktif beserta store-nya (dengan flag store default dan apakah QRIS terikat). `set-store` memilih store default Shopee yang tersimpan. Perhatikan: memilih merchant Shopee lewat CLI membutuhkan login token exchange baru, jadi `set-merchant` hanya untuk GoPay. Lihat [Ikhtisar CLI](/cli/overview).
+
+## Transisi scope
+
+`ShopeeProvider` mempertahankan satu `PaymentService` per scope agar karantina nominal dan consumed transaction id tidak hilang saat berpindah lalu kembali. Selama login, discovery, atau pergantian store, seluruh service terkait dihentikan sampai perubahan sesi berhasil dipersist. Jika operasi gagal, sesi, cookie, dan polling sebelumnya dipulihkan.
+
+Reference `PaymentService` dari store lama menjadi inactive; `createPayment`, `cancelPayment`, `start`, dan `tick` akan ditolak. Ambil kembali service aktif lewat `shopee.payments()` setelah transisi selesai. `listStores()` tidak membuang service. Lihat [Sesi Shopee](/shopee/sessions).
+
+## Referensi
+
+Lihat [Referensi API ShopeeProvider](/api/shopee-provider) untuk `selectMerchant`, `listStores`, dan `selectStore`.

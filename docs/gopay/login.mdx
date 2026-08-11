@@ -1,0 +1,125 @@
+---
+title: "Login GoPay"
+description: "OTP GoID dua langkah, LoginService untuk UI web, dan mekanisme refresh token."
+---
+
+GoPay memakai OTP GoID dua langkah: minta OTP untuk nomor telepon, lalu verifikasi untuk menukar OTP dengan access/refresh token.
+
+## Login lewat CLI
+
+```bash
+npx merchantid login gopay
+npx merchantid merchants gopay
+npx merchantid set-merchant G000000001 --provider gopay
+npx merchantid whoami
+```
+
+CLI menyimpan konfigurasi provider-keyed di `~/.merchantid/config.json`. Simpan file itu sebagai kredensial privat. Lihat [Ikhtisar CLI](/cli/overview).
+
+## Login lewat kode
+
+<Steps>
+  <Step title="Minta OTP">
+    ```ts
+    const gopay = new GopayProvider({
+      onTokenRefreshed: async (session) => {
+        await saveSecret("gopay-session", session);
+      },
+    });
+
+    const otpResult = await gopay.requestOtp("81234567890", "62");
+    if (!otpResult.otpToken) {
+      throw new Error("GoPay tidak mengembalikan OTP challenge token");
+    }
+    ```
+    `requestOtp` menerima format nomor Indonesia apa pun (62/+62/08/8, dengan pemisah) dan mengirim GoID nomor subscriber polos plus country code. Ia mengembalikan `LoginRequestResult` dengan `otpToken` opsional.
+
+  </Step>
+  <Step title="Verifikasi OTP">
+    ```ts
+    await gopay.verifyOtp({
+      otp: otpFromUser,
+      otpToken: otpResult.otpToken,
+      phoneNumber: "81234567890",
+      countryCode: "62",
+    });
+    ```
+    `verifyOtp` menukar OTP dengan `TokenSet`, menginisialisasi token manager, lalu mencoba meresolusi merchant id dan QRIS statis. `phoneNumber`/`countryCode` diterima untuk simetri API tetapi tidak dikirim ke endpoint token.
+  </Step>
+  <Step title="Simpan sesi">
+    ```ts
+    const session = gopay.exportSession();
+    await saveSecret("gopay-session", session);
+    ```
+    `exportSession` mengembalikan `SessionState` berisi token dan device id. Perlakukan sebagai kredensial.
+  </Step>
+</Steps>
+
+## LoginService untuk UI web
+
+CLI menggerakkan login lewat prompt terminal. `LoginService` mengekspos alur yang sama sebagai langkah awaitable plus callback, sehingga front end React, Vue, atau Next.js dapat membangun layar login sendiri.
+
+```ts
+import { LoginService, GopayProvider } from "merchantid";
+
+const loginService = new LoginService({ gopay: new GopayProvider() });
+
+// Langkah 1: kirim OTP.
+const { otpToken } = await loginService.requestOtp({
+  phoneNumber: "81234567890",
+});
+
+// Langkah 2: verifikasi dan terima sesi.
+const result = await loginService.verifyOtpAndLogin({
+  otp: "123456",
+  otpToken: otpToken ?? "",
+});
+
+if (result.success) {
+  await saveSession(result.session);
+  console.log(result.merchants); // ringkasan merchant
+}
+```
+
+`requestOtp` melempar bila gagal, sedangkan `verifyOtpAndLogin` tidak pernah melempar - kegagalan dilaporkan lewat `LoginResult.error` sehingga UI dapat merendernya langsung. `createLoginService(config?)` membuat instance dengan `GopayProvider` baru bila tidak disediakan.
+
+Untuk memeriksa apakah sesi tersimpan masih hidup tanpa mengganggu instance utama:
+
+```ts
+const alive = await loginService.validateSession(session); // boolean
+```
+
+`validateSession` mengembalikan `false` untuk kegagalan apa pun (sesi ditolak maupun jaringan tak terjangkau). Untuk membedakan keduanya, lakukan request nyata dan periksa `AuthError`/`HttpError` yang dilempar.
+
+## Refresh token
+
+GoID hanya menerima refresh token di dalam objek `data`:
+
+```jsonc
+{
+  "client_id": "...",
+  "data": { "refresh_token": "..." },
+  "grant_type": "refresh_token",
+}
+```
+
+Detail yang dikunci oleh perilaku endpoint yang teramati:
+
+- **Bentuk flat ditolak** `401 goid:error:unauthorized` - pesan generik yang terlihat seperti token kedaluwarsa, padahal request-nya malformed.
+- **Bearer request refresh sengaja kosong** agar refresh reaktif setelah `401` tetap mungkin. Refresh yang bergantung pada access token yang sudah ditolak tidak akan pernah memulihkan sesi.
+- **Refresh token baru dari server harus diadopsi** dan dipersist lewat `onTokenRefreshed`; jangan pin token lama.
+- **Fallback expiry 30 menit** karena access token JWE tidak dapat dibaca klaim `exp`-nya dan respons tidak selalu menyediakan `expires_in`.
+
+Panggil refresh manual bila perlu:
+
+```ts
+const tokens = await gopay.refreshSession();
+```
+
+## Sesi dicabut
+
+Login dari perangkat lain dapat mencabut sesi. Polling akan surface `AuthError` dengan code `AUTH_FAILED`. Perlakukan itu sebagai kebutuhan login ulang, bukan sebagai status belum dibayar. Lihat [Penanganan error](/concepts/errors).
+
+## Referensi
+
+Lihat [Referensi API GopayProvider](/api/gopay-provider) untuk `requestOtp`, `verifyOtp`, `exportSession`, dan `refreshSession`.

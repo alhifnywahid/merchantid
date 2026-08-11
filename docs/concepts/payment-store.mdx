@@ -1,0 +1,88 @@
+---
+title: "PaymentStore"
+description: "Kontrak persistence pembayaran, InMemoryPaymentStore, dan syarat store production multi-instance."
+---
+
+`PaymentStore` adalah kontrak persistence pembayaran aktif. MerchantId menyertakan `InMemoryPaymentStore` untuk pengembangan dan satu proses; deployment multi-instance harus menyediakan store tahan lama.
+
+## Kontrak
+
+```ts
+interface PaymentStore {
+  create(payment: Payment): Promise<void> | void;
+  update(payment: Payment): Promise<void> | void;
+  get(id: string): Promise<Payment | undefined> | Payment | undefined;
+  listActive(scope?: PaymentScope): Promise<Payment[]> | Payment[];
+}
+```
+
+`listActive` mengembalikan semua pembayaran yang masih menempati slot nominal unik. Implementasi harus menerapkan `scope` bila diberikan; `PaymentService` juga memfilter defensif saat store kustom mengembalikan record dari scope lain.
+
+## InMemoryPaymentStore
+
+Default bila Anda tidak menyediakan `store`.
+
+```ts
+import { InMemoryPaymentStore } from "merchantid";
+
+const store = new InMemoryPaymentStore();
+```
+
+`InMemoryPaymentStore` hanya cocok untuk test atau satu proses. State, karantina nominal, dan ingatan transaksi yang sudah dipakai tidak dapat mengoordinasikan beberapa proses. Deployment multi-instance harus memindahkan jaminan itu ke penyimpanan tahan lama.
+
+## Store production
+
+Sediakan implementasi Anda sendiri lewat `store` pada config provider.
+
+```ts
+import type { Payment, PaymentScope, PaymentStore } from "merchantid";
+
+class DatabasePaymentStore implements PaymentStore {
+  async create(payment: Payment): Promise<void> {
+    // Gunakan transaksi database dan unique constraint pada scope + uniqueAmount
+    // untuk baris yang masih pending.
+    await db.payments.insert(payment);
+  }
+
+  async update(payment: Payment): Promise<void> {
+    await db.payments.update(payment.id, payment);
+  }
+
+  async get(id: string): Promise<Payment | undefined> {
+    return db.payments.get(id);
+  }
+
+  async listActive(scope?: PaymentScope): Promise<Payment[]> {
+    return db.payments.listPending(scope);
+  }
+}
+```
+
+Store production wajib:
+
+- **Menyimpan `payment.scope` tanpa menghapus field.**
+- **Memfilter `listActive(scope)` secara benar.**
+- **Menegakkan keunikan nominal aktif per scope secara atomik** - misalnya unique constraint pada `scope + uniqueAmount` untuk baris pending.
+- **Mencegah transisi terminal ditimpa proses lain.**
+- **Menyimpan klaim transaksi atau jaminan ekuivalen bila proses dapat restart.**
+
+<Warning>
+  `PaymentService` memfilter scope lagi sebagai pertahanan terhadap store lama,
+  tetapi itu bukan pengganti constraint database. Karantina nominal dan ingatan
+  transaksi terkonsumsi hidup di memori proses; restart dan multi-process
+  memerlukan jaminan persistence pada store. Lihat [Konsep
+  inti](/guide/concepts).
+</Warning>
+
+## Scope dan record tanpa scope
+
+`PaymentService` beroperasi dalam salah satu dari dua mode:
+
+- **Scoped** (dipakai facade provider): hanya memproses pembayaran dengan scope yang sama, dan fail-fast bila store memiliki payment aktif tanpa scope. Record tanpa scope ambigu dan tidak boleh diklaim feed provider.
+- **Unscoped** (pemakaian `PaymentService` langsung tanpa scope): hanya memproses pembayaran tanpa `scope`.
+
+Perpindahan store Shopee ditolak selama scope lama masih punya payment aktif. Lihat [Sesi Shopee](/shopee/sessions).
+
+## Referensi
+
+Lihat [Referensi API tipe](/api/types#paymentstore) untuk tipe terkait.

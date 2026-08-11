@@ -1,0 +1,61 @@
+---
+title: "Ikhtisar Referensi API"
+description: "Seluruh permukaan publik yang diekspor dari paket merchantid."
+---
+
+Seluruh API publik diekspor dari entry tunggal `merchantid`. Apa yang tidak diekspor di sana bukan API publik. Halaman ini mengelompokkan ekspor; halaman referensi lain merinci tiap grup.
+
+## Registry dan provider
+
+| Ekspor                           | Jenis    | Halaman                                |
+| -------------------------------- | -------- | -------------------------------------- |
+| `MerchantId`, `createMerchantId` | class/fn | [MerchantId](/api/merchantid)          |
+| `GopayProvider`                  | class    | [GopayProvider](/api/gopay-provider)   |
+| `ShopeeProvider`                 | class    | [ShopeeProvider](/api/shopee-provider) |
+
+## Pembayaran
+
+| Ekspor                        | Jenis | Halaman                                           |
+| ----------------------------- | ----- | ------------------------------------------------- |
+| `PaymentService`              | class | [PaymentService](/api/payment-service)            |
+| `InMemoryPaymentStore`        | class | [PaymentStore](/concepts/payment-store)           |
+| `AmountAllocator`             | class | [QRIS dan alokasi](/api/qris#amountallocator)     |
+| `matchesPayment`, `reconcile` | fn    | [PaymentService](/api/payment-service#pencocokan) |
+
+## QRIS dan CRC
+
+| Ekspor                                                                            | Jenis | Halaman                      |
+| --------------------------------------------------------------------------------- | ----- | ---------------------------- |
+| `parseEmv`, `buildEmv`, `encodeTlv`, `staticToDynamicQris`, `isValidQrisChecksum` | fn    | [QRIS](/api/qris)            |
+| `QRIS_TAGS`                                                                       | const | [QRIS](/api/qris#qris_tags)  |
+| `crc16ccitt`                                                                      | fn    | [QRIS](/api/qris#crc16ccitt) |
+
+## Error
+
+| Ekspor                                                                                         | Halaman              |
+| ---------------------------------------------------------------------------------------------- | -------------------- |
+| `MerchantIdError`, `ConfigError`, `AuthError`, `CaptchaRequiredError`, `HttpError`, `ApiError` | [Error](/api/errors) |
+
+## Logging dan HTTP
+
+| Ekspor                              | Jenis    | Halaman                              |
+| ----------------------------------- | -------- | ------------------------------------ |
+| `createConsoleLogger`, `noopLogger` | fn/const | [Logging](/concepts/logging)         |
+| `HttpClient` (`GopayHttpClient`)    | class    | [GopayProvider](/api/gopay-provider) |
+
+## Tipe
+
+Tipe publik (semua `import type`): `MerchantProvider`, `TransactionFeed`, `PaymentScope`, `Payment`, `PaymentStore`, `TokenSet`, `SessionState`, `MerchantTransaction`, tipe GoPay dan Shopee, dan lainnya. Lihat [Tipe](/api/types).
+
+## Konstanta
+
+`GOBIZ_API_BASE_URL`, `GOJEK_API_BASE_URL`, `PAID_TRANSACTION_STATUSES`, `DEFAULT_PAYMENT_TYPES`, `DEFAULT_TRANSACTION_PAGE_SIZE`, `MAX_TRANSACTION_PAGE_SIZE`, `MAX_TRANSACTION_PAGES_PER_TICK`, dan konstanta Shopee (`SHOPEE_PROVIDER_ID`, base URL, `SHOPEE_DEVICE_RISK_BLOB`, dan lainnya). Lihat halaman provider masing-masing.
+
+## Alias provider
+
+Setiap provider mengekspor ulang beberapa client tingkat rendah dengan prefix agar tidak bentrok:
+
+- **GoPay:** `GopayAuthClient`, `GopayMerchantClient`, `GopayTransactionClient`, `GopayLoginService`/`LoginService`, `GopayTokenManager`, tipe terkait.
+- **Shopee:** `ShopeeAuthClient`, `ShopeeMerchantClient`, `ShopeeTransactionFeed`, `ShopeeCookieJar`, `ShopeeHttpClient`, `parseShopeeAmount`, `md5Hex`/`sha256Hex`/`hashShopeePassword`, `SHOPEE_DEVICE_RISK_BLOB`.
+
+Umumnya Anda hanya memerlukan facade `GopayProvider`/`ShopeeProvider`; client tingkat rendah untuk kebutuhan lanjutan.

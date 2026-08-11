@@ -1,0 +1,95 @@
+---
+title: "Merchant dan outlet GoPay"
+description: "Discovery merchant, outlet, dan resolusi QRIS statis dari profil GoBiz."
+---
+
+Satu akun GoPay dapat mengakses beberapa merchant, dan tiap merchant dapat memiliki beberapa outlet (point-of-payment). QRIS statis berasal dari outlet, bukan merchant.
+
+## Daftar merchant
+
+```ts
+const merchants = await gopay.listMerchants(); // default limit 200
+```
+
+`listMerchants` mengembalikan `StoredMerchant[]` lewat `/v1/merchants/search`, satu entri per merchant yang dapat diakses akun. Ini sumber kebenaran untuk akun multi-merchant. Tiap entri memuat outlet dan QRIS-nya.
+
+```ts
+interface StoredMerchant {
+  id: string;
+  merchantName: string;
+  outletName?: string;
+  phone?: string;
+  email?: string;
+  businessType?: string;
+  merchantType?: string;
+  serviceArea?: string;
+  outlets: MerchantOutlet[];
+  qrString?: string; // QRIS outlet utama, bila ada
+  raw: unknown;
+}
+```
+
+## Profil merchant aktif
+
+```ts
+const profile = await gopay.getMerchantProfile();
+```
+
+`getMerchantProfile` mengambil profil merchant yang sedang aktif (`/v1/merchants/{id}`), termasuk daftar outlet dan QRIS masing-masing. Membutuhkan `merchantId` terkonfigurasi.
+
+```ts
+interface MerchantProfile {
+  id: string;
+  merchantName: string;
+  outletName?: string;
+  phone?: string;
+  email?: string;
+  serverKey?: string;
+  clientKey?: string;
+  timezone?: string;
+  outlets: MerchantOutlet[];
+  raw: unknown;
+}
+
+interface MerchantOutlet {
+  popId: string;
+  name?: string;
+  status?: string;
+  receiverId?: string; // GoPay receiver id backing QRIS
+  qrString?: string; // QRIS EMVCo statis dari aspi_qr_string
+  raw: unknown;
+}
+```
+
+## Resolusi merchant id dan QRIS
+
+Setelah verifikasi OTP, `GopayProvider` mencoba meresolusi merchant id dan QRIS otomatis. Anda juga dapat memanggilnya eksplisit:
+
+```ts
+const merchantId = await gopay.resolveMerchantId(); // dari /v1/users/me
+const qris = await gopay.resolveStaticQris(); // dari profil outlet
+const qrisForPop = await gopay.resolveStaticQris("POP123"); // outlet tertentu
+```
+
+- `resolveMerchantId` mengambil merchant id dari profil user terautentikasi bila belum diset. Kegagalan ditelan agar login tidak putus.
+- `resolveStaticQris` memilih outlet dengan QRIS (yang pertama, atau `popId` tertentu) lalu men-cache-nya untuk generasi QR dinamis. Bila multi-outlet, gunakan `popId` untuk memilih.
+
+<Warning>
+  Jangan menganggap merchant pertama atau outlet pertama selalu benar. QRIS
+  berasal dari `pops[].gopay.aspi_qr_string`. Scope GoPay memakai
+  merchant/outlet yang benar-benar dipolling oleh facade. Lihat [Konsep
+  inti](/guide/concepts).
+</Warning>
+
+## CLI
+
+```bash
+npx merchantid merchants gopay
+npx merchantid set-merchant G000000001 --provider gopay
+```
+
+`merchants gopay` menampilkan merchant, id, dan outlet (dengan flag apakah punya QRIS) tanpa mencetak payload QR. `set-merchant` memilih merchant default GoPay yang tersimpan. Lihat [Ikhtisar CLI](/cli/overview).
+
+## Referensi
+
+Lihat [Referensi API GopayProvider](/api/gopay-provider) dan [tipe](/api/types) untuk `StoredMerchant`, `MerchantProfile`, dan `MerchantOutlet`.

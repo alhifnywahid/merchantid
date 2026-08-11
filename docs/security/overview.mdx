@@ -1,0 +1,53 @@
+---
+title: "Keamanan"
+description: "Penanganan kredensial, aturan yang tidak bisa dinegosiasi, dan penafian pemakaian."
+---
+
+MerchantId memindahkan uang sungguhan di akun merchant. Library ini memakai endpoint privat yang tidak berdokumentasi. Bagian ini merangkum aturan keamanan yang harus Anda patuhi.
+
+## Kredensial
+
+Objek berikut adalah kredensial. Simpan di secret store, jangan tulis ke log, jangan kirim ke browser, jangan simpan sebagai fixture, dan jangan komit:
+
+- **GoPay `SessionState`:** access token, refresh token, device id.
+- **Shopee `ShopeeSession`:** cookie yang dapat memberi akses merchant, dan `switchCredential` yang dapat mencetak token merchant tanpa OTP kedua.
+- **Shopee `ShopeeOtpChallenge` dan `ShopeeOtpVerification`:** cookie dan device fingerprint sensitif.
+- **File config CLI** (`~/.merchantid/config.json`): memuat semua di atas.
+- **Payload QRIS:** payload dinamis membawa nominal; QRIS Shopee terikat ke store lewat metadata owner.
+
+## Perlindungan bawaan
+
+Library menjaga beberapa hal untuk Anda:
+
+- **`HttpError.body` non-enumerable:** `console.error(err)` tidak akan menuang respons provider (termasuk kredensial) ke log. Membaca `error.body` tetap berfungsi.
+- **Deskripsi request host+path:** client mendeskripsikan request hanya sebagai host + path, bukan URL penuh yang bisa memuat query string sensitif.
+- **CLI mask default:** `session` menampilkan kredensial ter-mask kecuali `--reveal`; `switchCredential` Shopee di-mask field per field.
+- **Debug aman:** output `MERCHANTID_DEBUG` hanya menampilkan sinyal ada/tidak, bukan nilai token/cookie/OTP/QRIS.
+
+Lihat [Logging](/concepts/logging) dan [Penanganan error](/concepts/errors).
+
+## Aturan yang tidak bisa dinegosiasi
+
+1. **Jangan pernah menulis token, cookie, OTP, challenge, QRIS asli, atau credential** ke log, error, fixture, contoh, maupun diff.
+2. **Jangan commit file config, HAR, atau data sesi.** File config CLI dan semua `*.har` memuat PII dan kredensial.
+3. **Jangan bypass CAPTCHA.** Surface `CAPTCHA_REQUIRED` dan berhenti. Library tidak mencoba melewati CAPTCHA.
+4. **Gunakan hanya akun merchant milik Anda sendiri.** Endpoint privat dan otomasi dapat memicu rate limit, penangguhan, atau penutupan akun.
+5. **`session --reveal` hanya di terminal privat.**
+
+## SHOPEE_DEVICE_RISK_BLOB
+
+Konstanta `SHOPEE_DEVICE_RISK_BLOB` adalah laporan device-risk hasil tangkapan satu mesin. Memakainya berarti melaporkan identitas device yang bukan milik Anda kepada sistem anti-fraud Shopee, yang secara substansi adalah menyiasati kontrol tersebut - dengan risiko pelanggaran ToS dan penangguhan akun, dan dapat menautkan serta memblokir banyak akun sekaligus. Tangkap laporan dari browser Anda sendiri. Lihat [Device risk](/shopee/device-risk).
+
+## Endpoint yang jarang berubah, tetapi bisa
+
+Provider memakai endpoint privat yang tidak berdokumentasi dan dapat berubah tanpa pemberitahuan. Perilaku yang dikunci test (matching nominal, status sukses, expiry, scope, refresh flow) berdasarkan bukti yang diamati, bukan kontrak resmi. Perubahan provider dapat memutus alur kapan saja.
+
+## Penafian
+
+Tidak berafiliasi dengan, didukung oleh, atau disponsori oleh Gojek, GoTo, Shopee, maupun Sea Group. Dibuat untuk keperluan edukasi dan integrasi personal dengan akun merchant milik sendiri.
+
+**Risiko ditanggung pengguna.** Library ini memakai endpoint privat yang tidak berdokumentasi. Memakainya dapat melanggar ketentuan layanan provider, dan provider dapat membatasi laju, menangguhkan, atau menutup akun merchant yang mengaksesnya secara otomatis - termasuk akun Anda sendiri. Baca ketentuan layanan provider dan putuskan sendiri. Perangkat lunak ini disediakan "sebagaimana adanya", tanpa jaminan apa pun; seluruh risiko dan tanggung jawab atas penggunaannya ada pada Anda.
+
+Perhatian khusus pada `SHOPEE_DEVICE_RISK_BLOB`: konstanta itu adalah laporan device-risk hasil tangkapan satu mesin. Memakainya berarti melaporkan identitas device yang bukan milik Anda kepada sistem anti-fraud Shopee, yang secara substansi adalah menyiasati kontrol tersebut. Tangkap laporan dari browser Anda sendiri.
+
+Library tidak berusaha melewati CAPTCHA.

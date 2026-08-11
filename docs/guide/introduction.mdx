@@ -1,0 +1,60 @@
+---
+title: "Pengenalan"
+description: "MerchantId - toolkit payment-provider TypeScript untuk merchant Indonesia: QRIS dinamis per pesanan dan rekonsiliasi settlement untuk GoPay Merchant dan ShopeePay Merchant."
+---
+
+MerchantId adalah toolkit payment-provider TypeScript untuk merchant Indonesia. Library ini mengubah QRIS statis merchant menjadi QRIS dinamis per pesanan, membaca feed transaksi merchant, dan mencocokkan settlement berdasarkan nominal unik.
+
+Satu paket, satu API inti, dua provider bawaan: GoPay Merchant (GoBiz) dan ShopeePay Merchant.
+
+<Warning>
+  **Klien tidak resmi.** Provider memakai endpoint privat yang tidak
+  berdokumentasi dan dapat berubah tanpa pemberitahuan. Gunakan hanya dengan
+  akun merchant milik Anda sendiri. Jangan menyimpan token, cookie, OTP, atau
+  payload konfigurasi di log maupun repository. Lihat
+  [Keamanan](/security/overview) dan [Penafian](/security/overview#penafian).
+</Warning>
+
+## Masalah yang diselesaikan
+
+API privat provider tidak membawa order reference milik aplikasi Anda. Ketika seorang pembeli memindai QRIS statis merchant, feed transaksi hanya menampilkan nominal, waktu, dan status - tidak ada cara langsung untuk tahu pesanan mana yang dibayar.
+
+MerchantId menyelesaikannya dengan menjadikan **nominal akhir** sebagai pembeda. Setiap pesanan mendapat offset rupiah unik (`baseAmount + offset`), lalu QRIS dinamis dengan nominal itu ditanam ke tag EMV `54`. Ketika transaksi dengan nominal itu muncul di feed, pesanannya teridentifikasi secara pasti.
+
+## Dua pekerjaan domain
+
+1. **QRIS statis menjadi dinamis.** `staticToDynamicQris` menyuntikkan nominal EMV tag `54`, membalik point-of-initiation dari statis ke dinamis, lalu menghitung ulang CRC. Lihat [Utilitas QRIS](/concepts/qris).
+2. **Rekonsiliasi settlement.** `PaymentService` menarik feed transaksi, mencocokkan nominal/status/waktu/scope, lalu menandai pembayaran `paid` atau `expired`. Lihat [Model pembayaran](/concepts/payments).
+
+## Provider bawaan
+
+| Provider                    | Adapter          | Autentikasi                                | Feed transaksi              | QRIS statis                                 |
+| --------------------------- | ---------------- | ------------------------------------------ | --------------------------- | ------------------------------------------- |
+| GoPay Merchant / GoBiz      | `GopayProvider`  | OTP GoID, access token, refresh token      | Offset pagination GoBiz     | Ditemukan dari outlet atau diberikan manual |
+| Shopee Merchant / ShopeePay | `ShopeeProvider` | OTP fetch-only, cookie jar, merchant token | Cursor pagination ShopeePay | Diberikan manual dan terikat ke store       |
+
+`MerchantId` menjadi registry untuk mendaftarkan adapter dan memilih provider aktif tanpa menyatukan detail autentikasi masing-masing provider. Lihat [Komposisi multi-provider](/guide/multi-provider).
+
+## Karakteristik
+
+- **Nol dependency runtime.** Memakai `fetch` global dan primitive Web API.
+- **ESM dan CommonJS.** Kedua build tersedia dengan deklarasi tipe.
+- **Provider-neutral core.** `core` mendeklarasikan kontrak; adapter provider dan lapisan transport mengimplementasikannya. Dependency selalu mengarah ke dalam.
+- **Lintas runtime.** Node.js 18+, Cloudflare Workers, Vercel Edge, Deno, dan Bun memakai paket yang sama. Lihat [Dukungan runtime](/troubleshooting/overview#dukungan-runtime).
+
+## Langkah berikutnya
+
+<CardGroup cols={2}>
+  <Card title="Instalasi" icon="download" href="/guide/installation">
+    Pasang paket dan verifikasi runtime.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/guide/quickstart">
+    Dari login sampai pembayaran pertama.
+  </Card>
+  <Card title="Konsep inti" icon="diagram-project" href="/guide/concepts">
+    Nominal unik, scope, dan siklus pembayaran.
+  </Card>
+  <Card title="Referensi API" icon="code" href="/api/overview">
+    Seluruh permukaan publik yang diekspor.
+  </Card>
+</CardGroup>

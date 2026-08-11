@@ -1,0 +1,98 @@
+---
+title: "Error"
+description: "Hierarki error terketik MerchantId: kode, subclass, dan pola penanganan."
+---
+
+Setiap kegagalan yang muncul ke pemanggil adalah instance `MerchantIdError`, sehingga penanganan error dapat diprediksi. Cabang pada `error.code`, bukan pada pesan.
+
+```ts
+import { MerchantIdError } from "merchantid";
+
+try {
+  await gopay.createPayment({ amount: 25000 });
+} catch (err) {
+  if (err instanceof MerchantIdError) {
+    switch (err.code) {
+      case "AUTH_REQUIRED":
+        // arahkan pengguna login ulang
+        break;
+      case "AMOUNT_POOL_EXHAUSTED":
+        // slot nominal habis; coba lagi nanti
+        break;
+    }
+  }
+}
+```
+
+## MerchantIdError
+
+Kelas dasar. Semua subclass mewarisinya.
+
+```ts
+class MerchantIdError extends Error {
+  readonly code: MerchantIdErrorCode;
+  readonly cause?: unknown;
+  readonly details?: Record<string, unknown>;
+}
+```
+
+## Kode error
+
+```ts
+type MerchantIdErrorCode =
+  | "CONFIG_INVALID"
+  | "AUTH_REQUIRED"
+  | "AUTH_FAILED"
+  | "CAPTCHA_REQUIRED"
+  | "HTTP_ERROR"
+  | "API_ERROR"
+  | "AMOUNT_POOL_EXHAUSTED"
+  | "QRIS_PARSE_ERROR";
+```
+
+| Kode                    | Arti                                                               |
+| ----------------------- | ------------------------------------------------------------------ |
+| `CONFIG_INVALID`        | Konfigurasi atau argumen tidak valid                               |
+| `AUTH_REQUIRED`         | Belum terautentikasi atau sesi mati; login (ulang) diperlukan      |
+| `AUTH_FAILED`           | Kredensial ditolak atau sesi dicabut oleh provider                 |
+| `CAPTCHA_REQUIRED`      | Provider meminta CAPTCHA; otomasi berhenti                         |
+| `HTTP_ERROR`            | Respons HTTP non-sukses dari provider                              |
+| `API_ERROR`             | Provider mengembalikan error tingkat aplikasi                      |
+| `AMOUNT_POOL_EXHAUSTED` | Semua offset nominal unik untuk base amount terpakai               |
+| `QRIS_PARSE_ERROR`      | Payload QRIS malformed, checksum invalid, atau nilai di luar batas |
+
+## Subclass
+
+| Kelas                  | Kode                               | Anggota tambahan                  | Kapan                           |
+| ---------------------- | ---------------------------------- | --------------------------------- | ------------------------------- |
+| `ConfigError`          | `CONFIG_INVALID`                   | -                                 | Konfigurasi/argumen invalid     |
+| `AuthError`            | `AUTH_REQUIRED` atau `AUTH_FAILED` | -                                 | Masalah autentikasi/sesi        |
+| `CaptchaRequiredError` | `CAPTCHA_REQUIRED`                 | -                                 | CAPTCHA diminta                 |
+| `HttpError`            | `HTTP_ERROR`                       | `status: number`, `body: unknown` | Respons HTTP non-sukses         |
+| `ApiError`             | `API_ERROR`                        | `apiCode?: string`                | Error tingkat aplikasi provider |
+
+`MerchantIdError`, `AmountAllocator` (`AMOUNT_POOL_EXHAUSTED`), dan utilitas QRIS (`QRIS_PARSE_ERROR`) melempar `MerchantIdError` dasar dengan kode terkait, bukan subclass khusus.
+
+## HttpError.body non-enumerable
+
+`HttpError.body` sengaja **non-enumerable**. `console.error(err)` memakai `util.inspect`, yang mencetak properti enumerable milik error - body enumerable akan menuang seluruh respons provider (kredensial termasuk) ke log. Membaca `error.body` tetap berfungsi seperti biasa.
+
+```ts
+import { HttpError } from "merchantid";
+
+try {
+  await shopee.getMerchantProfile();
+} catch (err) {
+  if (err instanceof HttpError) {
+    console.log(err.status); // aman
+    inspect(err.body); // sengaja; jangan log mentah
+  }
+}
+```
+
+## AUTH_REQUIRED vs AUTH_FAILED
+
+- **`AUTH_REQUIRED`**: tidak ada sesi valid untuk operasi (belum login, atau sesi Shopee mati saat `refreshSession`). Perlakukan sebagai kebutuhan login, bukan status pembayaran.
+- **`AUTH_FAILED`**: kredensial ditolak atau sesi dicabut provider (mis. login dari perangkat lain mencabut sesi GoPay saat polling). Perlakukan sebagai kebutuhan login ulang, bukan pembayaran yang belum lunas.
+
+Lihat [Penanganan error](/concepts/errors) dan [Bantuan](/troubleshooting/overview).

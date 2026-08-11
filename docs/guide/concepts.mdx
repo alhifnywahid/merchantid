@@ -1,0 +1,77 @@
+---
+title: "Konsep inti"
+description: "Ide yang membuat rekonsiliasi berbasis nominal aman: nominal unik, scope, karantina, dan grace window."
+---
+
+MerchantId dibangun di atas satu kendala: API privat provider tidak membawa order reference milik aplikasi Anda. Nominal akhir menjadi pembeda utama. Halaman ini menjelaskan ide yang membuat pendekatan itu aman.
+
+## Nominal unik sebagai penanda
+
+Setiap pembayaran baru mendapat offset rupiah unik dari `AmountAllocator`. Keunikan berlaku pada **nominal akhir** (`baseAmount + offset`), bukan offset saja.
+
+```text
+Pesanan A  Rp 10.000  ->  Rp 10.001
+Pesanan B  Rp 10.000  ->  Rp 10.002
+Pesanan C  Rp 12.500  ->  Rp 12.501
+```
+
+Scoping per base amount saja tidak cukup: dengan jendela offset 999, base amount yang berbeda kurang dari itu bisa menghasilkan nominal final sama. `3500 + 1` dan `3499 + 2` sama-sama `3501`. Karena nominal adalah satu-satunya pembeda yang dimiliki poller, keduanya tidak boleh aktif pada scope yang sama. Slot terkecil selalu dipilih lebih dulu. Lihat [AmountAllocator](/api/qris#amountallocator).
+
+## PaymentScope
+
+Setiap pembayaran menyimpan kepemilikan eksplisit sehingga transaksi satu provider atau store tidak pernah melunasi pembayaran lain.
+
+```ts
+interface PaymentScope {
+  provider: string; // "gopay" | "shopee"
+  accountId?: string; // business merchant Shopee; opsional untuk GoPay
+  merchantId: string; // merchant GoPay, atau storeId Shopee
+}
+```
+
+- **GoPay:** `{ provider: "gopay", merchantId }`.
+- **Shopee:** `{ provider: "shopee", accountId: session.merchant.id, merchantId: session.storeId }`. `accountId` adalah business merchant, `merchantId` adalah store pemilik transaksi - satu merchant dapat memiliki beberapa store.
+
+`PaymentStore` bersama wajib menghormati scope pada `listActive(scope)`. `PaymentService` memfilter ulang hasilnya sebagai pertahanan tambahan. Lihat [PaymentStore](/concepts/payment-store).
+
+## Karantina nominal
+
+Ketika sebuah pembayaran meninggalkan himpunan aktif (paid, expired, atau cancelled), nominalnya dikarantina selama `2 x clockSkewMs`. Tanpa karantina, pesanan baru berharga sama dapat langsung menerima nominal bekas sementara transaksi lamanya masih di jendela matcher, sehingga satu transfer melunasi dua pesanan.
+
+Alasan `2 x clockSkewMs`: sebuah transaksi bisa melunasi pembayaran yang dibuat hingga `clockSkewMs` **sebelum** waktu transaksi, dan timestamp transaksi itu sendiri bisa `clockSkewMs` setelah slot dilepas. Dua skew setelah slot dibebaskan, tidak ada transaksi milik pembayaran lama yang masih bisa jatuh di jendela pembayaran baru.
+
+## Transaksi terkonsumsi
+
+`reconcile` menjamin satu transaksi dipakai paling banyak sekali dalam satu call. `PaymentService` memperluas jaminan itu lintas tick: id transaksi yang sudah melunasi pembayaran diingat selama masih mungkin muncul di jendela feed (rolling lookback 24 jam), sehingga row lama yang di-fetch ulang tidak pernah melunasi pesanan kedua.
+
+## Reconcile sebelum expire
+
+Rekonsiliasi selalu berjalan **sebelum** penandaan kedaluwarsa. Feed mengindeks transaksi dengan jeda, jadi pembeli yang membayar tepat waktu bisa muncul di feed setelah `expiresAt` lewat. Dua invariant yang dikunci:
+
+- Matching berjalan sebelum expiry pada setiap tick.
+- Pembayaran baru menjadi expired setelah `expiresAt + clockSkewMs`, yaitu persis saat matcher juga berhenti menerima transaksi untuknya.
+
+Ini menahan jeda indexing feed agar uang yang dibayar tepat waktu tidak kehilangan pesanannya. Lihat [Model pembayaran](/concepts/payments).
+
+## Fail-open untuk data tak dikenal
+
+Matcher menolak status gagal yang **dikenal**, tetapi menerima status kosong/tidak dikenal dan timestamp yang tidak dapat diparse. Feed privat dapat berubah label; mengubah ini menjadi fail-closed dapat membuat pembayaran sah tidak pernah terdeteksi. Perubahan kebijakan ini wajib disertai test yang membuktikan arah sukses dan gagal.
+
+## Satu antrean tulis
+
+`createPayment`, settle, cancel, dan expire diserialkan dalam satu antrean per `PaymentService`. `cancelPayment` yang balapan dengan settlement tidak boleh menimpa status `paid`. Ini hanya menjaga satu proses; deployment multi-process harus menegakkan keunikan dan atomicity di store persisten. Lihat [PaymentStore](/concepts/payment-store).
+
+## Langkah berikutnya
+
+<CardGroup cols={2}>
+  <Card title="Utilitas QRIS" icon="qrcode" href="/concepts/qris">
+    Cara nominal ditanam ke payload EMV.
+  </Card>
+  <Card
+    title="Model pembayaran"
+    icon="money-bill-transfer"
+    href="/concepts/payments"
+  >
+    Siklus create, poll, settle, expire.
+  </Card>
+</CardGroup>

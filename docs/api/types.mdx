@@ -1,0 +1,246 @@
+---
+title: "Tipe"
+description: "Tipe publik lintas provider: sesi, transaksi, pembayaran, scope, dan kontrak store."
+---
+
+Semua tipe di bawah diekspor sebagai `import type` dari `merchantid`. Bagian ini merangkum tipe inti; tipe khusus provider ada di halaman provider masing-masing.
+
+## PaymentScope
+
+```ts
+interface PaymentScope {
+  provider: string; // id provider stabil, mis. "gopay" atau "shopee"
+  accountId?: string; // id akun provider bila tersedia
+  merchantId: string; // id merchant/store native provider untuk polling
+}
+```
+
+GoPay: `{ provider: "gopay", merchantId }`. Shopee: `{ provider: "shopee", accountId: merchant.id, merchantId: storeId }`. Bandingkan dengan `samePaymentScope(a, b)`.
+
+## Payment
+
+```ts
+type PaymentStatus = "pending" | "paid" | "expired" | "cancelled";
+
+interface Payment {
+  id: string;
+  scope?: PaymentScope; // dihilangkan hanya pada record unscoped eksplisit
+  baseAmount: number; // nominal diminta merchant (rupiah penuh)
+  uniqueOffset: number; // offset unik untuk disambiguasi
+  uniqueAmount: number; // nominal yang harus ditransfer (base + offset)
+  status: PaymentStatus;
+  createdAt: number;
+  expiresAt: number;
+  reference?: string; // referensi caller (order id internal)
+  qrString?: string; // QRIS dinamis bila QRIS statis dikonfigurasi
+  transaction?: MerchantTransaction; // transaksi tercocok setelah lunas
+  metadata?: Record<string, unknown>;
+}
+```
+
+## PaymentStore
+
+```ts
+interface PaymentStore {
+  create(payment: Payment): Promise<void> | void;
+  update(payment: Payment): Promise<void> | void;
+  get(id: string): Promise<Payment | undefined> | Payment | undefined;
+  listActive(scope?: PaymentScope): Promise<Payment[]> | Payment[];
+}
+```
+
+Implementasi harus menerapkan `scope` bila diberikan. Lihat [PaymentStore](/concepts/payment-store).
+
+## MerchantTransaction
+
+```ts
+interface MerchantTransaction {
+  id: string;
+  orderId: string;
+  merchantId: string;
+  status: string;
+  paymentType: string;
+  grossAmount: number;
+  realGrossAmount?: number;
+  currency: string;
+  transactionTime: string;
+  settlementTime?: string;
+  transactionSource?: string;
+  raw: unknown;
+}
+```
+
+## TransactionLister dan TransactionQuery
+
+```ts
+interface TransactionLister {
+  list(
+    merchantId: string,
+    query: TransactionQuery,
+  ): Promise<MerchantTransaction[]>;
+}
+
+interface TransactionQuery {
+  from?: number;
+  size?: number;
+  statuses?: readonly string[];
+  paymentTypes?: readonly string[];
+  startTime: Date;
+  endTime: Date;
+}
+```
+
+Port offset-paginated yang dipakai GoPay. Shopee memakai `TransactionFeed` ternormalisasi (lihat di bawah).
+
+## TransactionFeed
+
+```ts
+interface TransactionFeed {
+  listRecent(query: TransactionFeedQuery): Promise<TransactionFeedResult>;
+}
+
+interface TransactionFeedQuery {
+  scope: PaymentScope;
+  startTime: Date;
+  endTime: Date;
+  pageSize: number;
+  maxPages: number;
+}
+
+interface TransactionFeedResult {
+  transactions: MerchantTransaction[];
+  truncated: boolean;
+  pagesFetched?: number;
+}
+```
+
+Adapter feed memiliki paginasi dan konversi sendiri. `truncated` menandai batas halaman per tick tercapai.
+
+## MerchantProvider
+
+Permukaan umum kecil yang diimplementasikan facade provider (`GopayProvider`, `ShopeeProvider`). Detail autentikasi sengaja tetap spesifik per provider dan tidak masuk kontrak ini:
+
+```ts
+interface MerchantProvider<TSession = SessionState> {
+  readonly providerId: string;
+  readonly authenticated: boolean;
+  readonly staticQris?: string;
+  getPaymentScope(): PaymentScope | undefined;
+  exportSession(): TSession;
+}
+```
+
+Metode seperti `payments()`, `createPayment()`, dan `refreshSession()` ada di tiap facade tetapi bukan bagian dari kontrak `MerchantProvider`. Lihat [Multi provider](/guide/multi-provider) untuk detail.
+
+## Tipe GoPay
+
+```ts
+interface TokenSet {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt?: number; // epoch ms bila derivable
+  tokenType: string;
+}
+
+interface SessionState {
+  tokens: TokenSet;
+  deviceId?: string;
+  lastRefreshedAt?: number;
+}
+
+interface LoginRequestResult {
+  otpToken?: string;
+  raw: unknown;
+}
+
+interface MerchantProfile {
+  id: string;
+  merchantName: string;
+  outletName?: string;
+  phone?: string;
+  email?: string;
+  serverKey?: string;
+  clientKey?: string;
+  timezone?: string;
+  outlets: MerchantOutlet[];
+  raw: unknown;
+}
+
+interface MerchantOutlet {
+  popId: string;
+  name?: string;
+  status?: string;
+  receiverId?: string;
+  qrString?: string; // payload QRIS statis EMVCo outlet
+  raw: unknown;
+}
+
+interface StoredMerchant {
+  id: string;
+  merchantName: string;
+  outletName?: string;
+  phone?: string;
+  email?: string;
+  businessType?: string;
+  merchantType?: string;
+  serviceArea?: string;
+  outlets: MerchantOutlet[];
+  qrString?: string;
+  raw: unknown;
+}
+```
+
+Lihat [Merchant GoPay](/gopay/merchants).
+
+## Tipe Shopee
+
+Tipe utama Shopee: `ShopeeSession`, `ShopeeMerchantSummary`, `ShopeeStore`, `ShopeeOtpChallenge`, `ShopeeOtpVerification`, `ShopeeOtpRequestOptions`, `ShopeeCookie`, `ShopeeStaticQrisScope`, `ShopeeMerchantProfile`, `ShopeeVerifyOtpInput`, `ShopeeCompleteLoginInput`, `ShopeeLoginWithOtpInput`, dan union `ShopeeLoginOutcome`.
+
+```ts
+type ShopeeLoginOutcome =
+  | { status: "complete"; session: ShopeeSession }
+  | {
+      status: "merchant-selection-required";
+      verification: ShopeeOtpVerification;
+      merchants: ShopeeMerchantSummary[];
+    };
+
+interface ShopeeSession {
+  version: 1;
+  cookies: ShopeeCookie[];
+  accountId: string;
+  merchant: ShopeeMerchantSummary;
+  merchants: ShopeeMerchantSummary[];
+  switchCredential?: {
+    tocNonce: string;
+    spcClientId: string;
+    deviceFingerprint: string;
+  };
+  stores: ShopeeStore[];
+  storeId?: string;
+  createdAt: number;
+  expiresAt?: number;
+}
+
+interface ShopeeStaticQrisScope {
+  merchantId: string;
+  storeId: string;
+}
+```
+
+`ShopeeOtpRequestOptions` menerima `channel` (1=SMS, 2=telepon, 3=WhatsApp), `password`, dan `deviceReport`. `ShopeeSession`, `ShopeeOtpChallenge`, `ShopeeOtpVerification`, dan `switchCredential` bersifat sensitif - lihat [Keamanan](/security/overview) dan [Sesi Shopee](/shopee/sessions).
+
+## Logger
+
+```ts
+type LogLevel = "debug" | "info" | "warn" | "error";
+
+interface Logger {
+  debug(message: string, context?: Record<string, unknown>): void;
+  info(message: string, context?: Record<string, unknown>): void;
+  warn(message: string, context?: Record<string, unknown>): void;
+  error(message: string, context?: Record<string, unknown>): void;
+}
+```
+
+Lihat [Logging](/concepts/logging).

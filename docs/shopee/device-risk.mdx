@@ -1,0 +1,55 @@
+---
+title: "Device risk dan pengiriman OTP"
+description: "Cara Shopee menilai laporan device-risk sebelum mengirim OTP, dan mengapa SHOPEE_DEVICE_RISK_BLOB berisiko."
+---
+
+Shopee menilai laporan device-risk sebelum benar-benar mengirim OTP. Memahami ini penting karena OTP dapat ditahan diam-diam meski setiap endpoint melaporkan sukses.
+
+## Cara kerja
+
+Shopee menilai laporan device-risk sebelum mengirim OTP. Bila laporannya tidak dikenali, semua endpoint tetap melaporkan sukses tetapi kodenya ditahan diam-diam. `ShopeeProvider` menerima laporan itu lewat opsi `deviceReport`:
+
+```ts
+const shopee = new ShopeeProvider({ deviceReport: reportFromYourBrowser });
+```
+
+Anda juga dapat memberikannya per panggilan:
+
+```ts
+const challenge = await shopee.requestOtp("6281234567890", {
+  password: passwordFromUser,
+  deviceReport: reportFromYourBrowser,
+});
+```
+
+Secara teknis: issuer menilai body laporan. Laporan tanpa telemetri menghasilkan token degraded (panjang segmen `24,76,...`) yang pengiriman OTP-nya diblokir diam-diam. Body telemetri yang diposting passport web client menghasilkan token penuh (`24,80,...`) yang dipakai untuk pengiriman. Token itu di-echo sebagai `security_device_fingerprint` dan header `af-ac-enc-sz-token` pada setiap request autentikasi.
+
+## Menangkap laporan Anda sendiri
+
+Tangkap laporan device-risk dari browser Anda sendiri. Ini adalah body yang diposting passport web client Shopee ke endpoint device-fingerprint saat Anda login lewat browser.
+
+## SHOPEE_DEVICE_RISK_BLOB
+
+Paket mengekspor konstanta `SHOPEE_DEVICE_RISK_BLOB`, sebuah laporan hasil tangkapan satu mesin.
+
+<Warning>
+  Memakai `SHOPEE_DEVICE_RISK_BLOB` berarti setiap pengguna melapor sebagai
+  device yang sama, yang dapat ditautkan Shopee dan dapat diblokir sekaligus
+  untuk semua orang. Secara substansi, memakai laporan yang bukan milik Anda
+  kepada sistem anti-fraud Shopee adalah menyiasati kontrol tersebut, dengan
+  risiko pelanggaran ToS dan penangguhan akun. Tangkap laporan dari browser Anda
+  sendiri. Lihat [Keamanan](/security/overview) dan
+  [Penafian](/security/overview#penafian).
+</Warning>
+
+## CLI dan device report
+
+CLI tidak mengirim device report bawaan: Shopee menilai laporan dan dapat menahan pengiriman OTP untuk request yang tidak dikenali. Bila tidak ada kode yang tiba saat login CLI, tangkap laporan dari browser Anda dan berikan lewat kode (`ShopeeProvider({ deviceReport })`).
+
+## Channel OTP
+
+`ShopeeOtpChallenge` membawa `channel` dan `availableChannels`. Channel: `1` = SMS, `2` = panggilan suara, `3` = WhatsApp. Default mengikuti channel yang dikembalikan endpoint settings Shopee (biasanya WhatsApp). Bila channel yang diminta tidak tersedia, `requestOtp` melempar `ConfigError` dengan daftar channel yang tersedia.
+
+## Referensi
+
+Lihat [Login Shopee](/shopee/login) untuk alur OTP lengkap dan [tipe](/api/types) untuk `ShopeeOtpRequestOptions`.
