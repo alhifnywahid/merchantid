@@ -334,7 +334,7 @@ Challenge, verification, dan session sensitif. Cookie jar murni harus mempertaha
 
 ### 7.6 Refresh Shopee: hanya lewat sesi akun yang masih hidup
 
-Jangan menambahkan `offlineToken` atau endpoint refresh berdasarkan tebakan. Yang terverifikasi hanya satu jalur: `POST /api/v4/account/business/login_status` menjawab `error:0` selama cookie akun (`SPC_*`) masih diterima, dan `48500102` ("not login") setelah tidak. Selama hidup, token merchant dicetak ulang dengan mengulang pertukaran SSO login (`login_toc` → `/account/login/tob/auth`) untuk merchant aktif — persis mekanisme `selectMerchant`, hanya targetnya diri sendiri. Itulah `ShopeeProvider.refreshSession()`.
+Jangan menambahkan `offlineToken` atau endpoint refresh berdasarkan tebakan. Yang terverifikasi hanya satu jalur: `POST /api/v4/account/business/login_status` menjawab `error:0` selama cookie akun (`SPC_*`) masih diterima, dan `48500102` ("not login") setelah tidak. Selama hidup, token merchant dicetak ulang dengan mengulang pertukaran SSO login (`login_toc` → `/account/login/tob/auth`) untuk merchant aktif - persis mekanisme `selectMerchant`, hanya targetnya diri sendiri. Itulah `ShopeeProvider.refreshSession()`.
 
 Dua jebakan yang harus dipatuhi:
 
@@ -394,7 +394,7 @@ Publish otomatis lewat GitHub Actions dan npm Trusted Publishing (OIDC). Tidak a
 Pemicu rilis adalah **tag versi `v*` yang di-push**, bukan event GitHub Release. Alur dua perintah dari branch default yang bersih dan hijau:
 
 ```bash
-npm version patch   # atau minor / major — bump package.json, commit, buat tag vX.Y.Z
+npm version patch   # atau minor / major - bump package.json, commit, buat tag vX.Y.Z
 git push --follow-tags
 ```
 
@@ -409,15 +409,35 @@ Aturan:
 - Workflow memakai Node 24 dan npm terbaru karena Trusted Publishing membutuhkan npm >= 11.5.1.
 - `permissions.id-token: write` (OIDC) dan `contents: write` (buat Release) wajib.
 - Jangan menambahkan `NODE_AUTH_TOKEN` atau `NPM_TOKEN`.
-- Pilih bump sesuai SemVer: `patch` untuk perbaikan, `minor` untuk fitur kompatibel, `major` untuk breaking. Perubahan breaking harus disebutkan beserta migrasinya.
+- Pilih bump sesuai SemVer: `patch` untuk perbaikan, `minor` untuk fitur kompatibel, `major` untuk breaking. **Selama `0.x` API belum stabil: breaking change memakai `minor` (bukan `major`), dan wajib dicatat di bawah "Changed"/"Removed" beserta migrasinya.**
 - Jangan membuat commit, tag, menaikkan version, push, atau publish tanpa permintaan eksplisit.
+
+### 9.1 Menulis catatan rilis (release notes)
+
+CI membuat Release dengan `--generate-notes` (otomatis dari commit) sebagai fallback. Untuk rilis yang berarti, **tulis catatan tangan** lalu perbarui halaman Release dengan `gh release edit vX.Y.Z --notes-file <file>` (aksi publik - minta izin dulu). Sumber kebenaran tetap `CHANGELOG.md`; catatan Release adalah cerminannya, bukan tulisan terpisah.
+
+Format (selaras `CHANGELOG.md`, gaya ringkas):
+
+- **Judul Release = kalimat, bukan cuma nomor.** Pakai prefix commit yang mendominasi rilis, lalu ringkasan: `refactor: rename to \`merchantid\`, drop manual cookie login`. Nomor versi sudah tampil di sebelah judul dari tag.
+- **Kelompokkan dengan heading tetap, urutan ini:** `Breaking` → `Features` → `Fixes` → `Improvements` → `Docs`. Lewati yang kosong. Untuk `0.x`, breaking change nyata → pakai heading `Breaking` (lebih jujur daripada memaksakan "Features").
+- **Tiap butir = satu kalimat: `area: aksi + alasan/dampak`.** Contoh: `Shopee: removed manual cookie import (importSession); OTP is the only login path now.` Sertakan `#nnn` bila ada issue/PR.
+- **Akhiri dengan** `**Full changelog:** https://github.com/alhifnywahid/merchantid/compare/vPREV...vNEW`.
+
+Disiplin editorial (jebakan yang mudah terlewat):
+
+- **Catatan rilis menggambarkan kondisi versi ITU, bukan kondisi terkini.** Jangan menulis ulang Release lama seakan-akan pakai nama/fitur sekarang. Contoh: halaman `v0.1.0` harus tetap menyebut nama lama `merchid` dan fitur yang saat itu ada (`importSession`), karena itulah yang benar untuk 0.1.0. Untuk mengarahkan pembaca, tambah satu baris blockquote di atas yang menunjuk ke versi/nama baru - jangan mengubah isi historisnya.
+- **Jangan pajang fitur yang sudah dihapus sebagai highlight aktif** di rilis yang menghapusnya; taruh di bawah `Removed`/`Breaking`.
+- **Nama produk konsisten:** display `MerchantId`, paket & CLI `merchantid` (kecuali saat menarasikan sejarah `merchid`).
 
 ---
 
 ## 10. Git
 
 - Branch utama `master`.
-- Commit prefix: `fix:`, `feat:`, `docs:`, `test:`, `refactor:`, `ci:`, `release:`.
+- Commit prefix: `fix:`, `feat:`, `docs:`, `test:`, `refactor:`, `ci:`, `release:`. Peta prefix → bump versi (untuk memilih `npm version <bump>`):
+  - `feat:` → **minor** (fitur kompatibel)
+  - `fix:`, `refactor:`, `docs:`, `test:`, `ci:`, `chore:` → **patch** (atau tanpa rilis)
+  - breaking change (mis. hapus/rename API publik) → **minor selama `0.x`**, dan wajib bertanda `BREAKING CHANGE:` di badan commit + entri migrasi di `CHANGELOG.md`.
 - Badan commit menjelaskan alasan.
 - Buat commit hanya bila diminta.
 - Jalankan `git status --short` sebelum staging. Stage file spesifik, bukan `git add -A`.
@@ -455,36 +475,36 @@ Laporkan apa yang benar-benar diverifikasi. Login live GoPay/Shopee, pengiriman 
 
 Jangan buka ulang tanpa bukti baru.
 
-| Keputusan                                                      | Alasan                                                                     |
-| -------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Package bernama `merchantid`                                   | Identitas singkat untuk toolkit merchant Indonesia                         |
-| `GopayProvider` dan `ShopeeProvider` adalah nama kanonis       | Nama adapter konkret yang konsisten dengan arsitektur provider             |
-| `MerchantIdError` adalah base error publik                     | Satu hierarchy error provider-neutral untuk seluruh adapter                |
-| `MerchantId` hanya registry/composition root                   | Auth tiap provider berbeda dan tidak boleh menjadi monolith bercabang      |
-| `TransactionFeed` provider-owned                               | Cursor Shopee dan offset GoPay tidak bocor ke payment core                 |
-| `PaymentScope` provider/account/merchant-store                 | Mencegah settlement silang provider, account, dan store                    |
-| `fetch` global dan nol dependency runtime                      | Node, Workers, Edge, Deno, dan Bun memakai package yang sama               |
-| Nominal unik sebagai penanda pembayaran                        | Feed privat tidak membawa reference pesanan aplikasi                       |
-| Keunikan pada nominal akhir                                    | Offset berbeda dapat menghasilkan nominal final sama                       |
-| Karantina `2 x clockSkewMs` + consumed transaction lintas tick | Satu transfer lama tidak boleh melunasi pesanan baru                       |
-| Reconcile sebelum expire, grace `clockSkewMs`                  | Jeda indexing feed tidak boleh membuat uang kehilangan pesanan             |
-| Rolling lookback 24 jam dari payment aktif tertua              | Menghindari batas hari dan menjaga pagination terjangkau                   |
-| GoPay membagi minor unit tepat 100                             | Nilai pecahan gagal cocok dengan aman                                      |
-| GoPay page size di-clamp 100                                   | Limit API 422; halaman kecil masih berguna                                 |
-| Matcher GoPay fail-open pada data tak dikenal                  | Feed privat bervariasi; melewatkan pembayaran sah lebih berbahaya          |
-| GoPay refresh nested di `data`, bearer kosong                  | Bentuk endpoint yang terbukti dan recovery setelah `401`                   |
-| Shopee status sukses hanya `3`                                 | Satu-satunya status selesai yang terbukti                                  |
-| Shopee amount parser ketat                                     | `parseFloat("30.000")` menghasilkan nominal salah                          |
-| Shopee scope merchant bisnis + store                           | Satu merchant dapat memiliki beberapa feed store                           |
-| Shopee QRIS manual                                             | Tidak ada discovery endpoint pada flow yang diamati                        |
-| Refresh Shopee hanya lewat `login_status` + ulang SSO          | Satu-satunya jalur terverifikasi; `SwitchMerchant` ditolak headless        |
-| CAPTCHA menghasilkan `CAPTCHA_REQUIRED`                        | Kontrol provider harus dihormati, bukan dibypass                           |
-| Semua status transition lewat antrean tulis                    | Cancel dan settlement tidak boleh saling menimpa                           |
-| Interface di core, implementasi di luar                        | Dependency Rule dan test injection                                         |
-| CLI config versioned dan provider-keyed                        | Credential provider tidak bercampur; hanya schema MerchantId yang diterima |
-| Satu binary `merchantid`                                       | Satu entry CLI untuk seluruh provider                                      |
-| Web dev lab (`.example/development/web`) memakai `merchantid: file:../../..` | Menguji build lokal (link ke root repo) sebelum publish tanpa registry npm  |
+| Keputusan                                                                    | Alasan                                                                     |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Package bernama `merchantid`                                                 | Identitas singkat untuk toolkit merchant Indonesia                         |
+| `GopayProvider` dan `ShopeeProvider` adalah nama kanonis                     | Nama adapter konkret yang konsisten dengan arsitektur provider             |
+| `MerchantIdError` adalah base error publik                                   | Satu hierarchy error provider-neutral untuk seluruh adapter                |
+| `MerchantId` hanya registry/composition root                                 | Auth tiap provider berbeda dan tidak boleh menjadi monolith bercabang      |
+| `TransactionFeed` provider-owned                                             | Cursor Shopee dan offset GoPay tidak bocor ke payment core                 |
+| `PaymentScope` provider/account/merchant-store                               | Mencegah settlement silang provider, account, dan store                    |
+| `fetch` global dan nol dependency runtime                                    | Node, Workers, Edge, Deno, dan Bun memakai package yang sama               |
+| Nominal unik sebagai penanda pembayaran                                      | Feed privat tidak membawa reference pesanan aplikasi                       |
+| Keunikan pada nominal akhir                                                  | Offset berbeda dapat menghasilkan nominal final sama                       |
+| Karantina `2 x clockSkewMs` + consumed transaction lintas tick               | Satu transfer lama tidak boleh melunasi pesanan baru                       |
+| Reconcile sebelum expire, grace `clockSkewMs`                                | Jeda indexing feed tidak boleh membuat uang kehilangan pesanan             |
+| Rolling lookback 24 jam dari payment aktif tertua                            | Menghindari batas hari dan menjaga pagination terjangkau                   |
+| GoPay membagi minor unit tepat 100                                           | Nilai pecahan gagal cocok dengan aman                                      |
+| GoPay page size di-clamp 100                                                 | Limit API 422; halaman kecil masih berguna                                 |
+| Matcher GoPay fail-open pada data tak dikenal                                | Feed privat bervariasi; melewatkan pembayaran sah lebih berbahaya          |
+| GoPay refresh nested di `data`, bearer kosong                                | Bentuk endpoint yang terbukti dan recovery setelah `401`                   |
+| Shopee status sukses hanya `3`                                               | Satu-satunya status selesai yang terbukti                                  |
+| Shopee amount parser ketat                                                   | `parseFloat("30.000")` menghasilkan nominal salah                          |
+| Shopee scope merchant bisnis + store                                         | Satu merchant dapat memiliki beberapa feed store                           |
+| Shopee QRIS manual                                                           | Tidak ada discovery endpoint pada flow yang diamati                        |
+| Refresh Shopee hanya lewat `login_status` + ulang SSO                        | Satu-satunya jalur terverifikasi; `SwitchMerchant` ditolak headless        |
+| CAPTCHA menghasilkan `CAPTCHA_REQUIRED`                                      | Kontrol provider harus dihormati, bukan dibypass                           |
+| Semua status transition lewat antrean tulis                                  | Cancel dan settlement tidak boleh saling menimpa                           |
+| Interface di core, implementasi di luar                                      | Dependency Rule dan test injection                                         |
+| CLI config versioned dan provider-keyed                                      | Credential provider tidak bercampur; hanya schema MerchantId yang diterima |
+| Satu binary `merchantid`                                                     | Satu entry CLI untuk seluruh provider                                      |
+| Web dev lab (`.example/development/web`) memakai `merchantid: file:../../..` | Menguji build lokal (link ke root repo) sebelum publish tanpa registry npm |
 | Web produksi (`.example/production`) memakai `merchantid: 0.1.x` dari npm    | Menguji paket terpublikasi apa adanya, seperti konsumen sungguhan          |
-| Web dev lab selalu live dan state schema v2                    | Menguji request provider nyata; state/payment lama direset dengan aman     |
-| Credential web lab hanya di server dan `data/` gitignored      | Browser dan diff tidak boleh menerima material session atau QRIS mentah    |
-| Trusted Publishing OIDC tanpa token                            | Tidak ada npm token yang dapat bocor atau perlu dirotasi                   |
+| Web dev lab selalu live dan state schema v2                                  | Menguji request provider nyata; state/payment lama direset dengan aman     |
+| Credential web lab hanya di server dan `data/` gitignored                    | Browser dan diff tidak boleh menerima material session atau QRIS mentah    |
+| Trusted Publishing OIDC tanpa token                                          | Tidak ada npm token yang dapat bocor atau perlu dirotasi                   |

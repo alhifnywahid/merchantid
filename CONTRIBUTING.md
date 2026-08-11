@@ -196,11 +196,20 @@ Publish npm berjalan otomatis lewat npm Trusted Publishing (OIDC), dipicu oleh *
 Alur rilis (dari branch default yang bersih dan hijau):
 
 ```bash
-npm version patch   # atau minor / major — bump package.json, commit, buat tag vX.Y.Z
+npm version patch   # atau minor / major - bump package.json, commit, buat tag vX.Y.Z
 git push --follow-tags
 ```
 
-Push tag `v*` menjalankan `.github/workflows/publish.yml`: ia memverifikasi tag cocok dengan `package.json`, menjalankan typecheck/lint/format/test/build, `npm publish --provenance`, lalu membuat GitHub Release berisi catatan otomatis. Release baru muncul **setelah** publish sukses, jadi keberadaan Release menandakan versi benar-benar live di npm. Pilih bump sesuai [SemVer](https://semver.org): `patch` untuk perbaikan, `minor` untuk fitur kompatibel, `major` untuk perubahan yang memutus kompatibilitas.
+Push tag `v*` menjalankan `.github/workflows/publish.yml`: ia memverifikasi tag cocok dengan `package.json`, menjalankan typecheck/lint/format/test/build, `npm publish --provenance`, lalu membuat GitHub Release berisi catatan otomatis. Release baru muncul **setelah** publish sukses, jadi keberadaan Release menandakan versi benar-benar live di npm. Pilih bump sesuai [SemVer](https://semver.org): `patch` untuk perbaikan, `minor` untuk fitur kompatibel, `major` untuk perubahan yang memutus kompatibilitas. Selama versi masih `0.x`, API publik belum stabil: breaking change memakai `minor` (bukan `major`) dan wajib dicatat di `CHANGELOG.md` di bawah **Changed** atau **Removed** beserta migrasinya.
+
+### Menulis catatan rilis
+
+`CHANGELOG.md` adalah sumber kebenaran; catatan pada halaman GitHub Release adalah cerminannya. Untuk rilis yang berarti, tulis catatan tangan (bukan hanya catatan otomatis CI):
+
+- **Judul Release berupa kalimat**, bukan sekadar nomor - mis. `refactor: rename to merchantid, drop manual cookie login`. Nomor versi sudah tampil dari tag.
+- **Kelompokkan dengan heading tetap**, urutan: Breaking → Features → Fixes → Improvements → Docs. Lewati yang kosong.
+- **Tiap butir satu kalimat**: `area: aksi + alasan`, sertakan `#nnn` bila ada issue/PR.
+- **Catatan rilis menggambarkan kondisi versi itu, bukan kondisi terkini.** Jangan menulis ulang Release lama seakan memakai nama atau fitur sekarang; untuk mengarahkan pembaca, tambahkan satu baris pengantar yang menunjuk versi baru tanpa mengubah isi historisnya.
 
 ## Lisensi
 
