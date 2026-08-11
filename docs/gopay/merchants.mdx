@@ -55,8 +55,8 @@ interface MerchantOutlet {
   popId: string;
   name?: string;
   status?: string;
-  receiverId?: string;   // GoPay receiver id backing QRIS
-  qrString?: string;     // QRIS EMVCo statis dari aspi_qr_string
+  receiverId?: string; // GoPay receiver id backing QRIS
+  qrString?: string; // QRIS EMVCo statis dari aspi_qr_string
   raw: unknown;
 }
 ```
@@ -67,7 +67,7 @@ Setelah verifikasi OTP, `GopayProvider` mencoba meresolusi merchant id dan QRIS 
 
 ```ts
 const merchantId = await gopay.resolveMerchantId(); // dari /v1/users/me
-const qris = await gopay.resolveStaticQris();       // dari profil outlet
+const qris = await gopay.resolveStaticQris(); // dari profil outlet
 const qrisForPop = await gopay.resolveStaticQris("POP123"); // outlet tertentu
 ```
 
@@ -75,7 +75,10 @@ const qrisForPop = await gopay.resolveStaticQris("POP123"); // outlet tertentu
 - `resolveStaticQris` memilih outlet dengan QRIS (yang pertama, atau `popId` tertentu) lalu men-cache-nya untuk generasi QR dinamis. Bila multi-outlet, gunakan `popId` untuk memilih.
 
 <Warning>
-  Jangan menganggap merchant pertama atau outlet pertama selalu benar. QRIS berasal dari `pops[].gopay.aspi_qr_string`. Scope GoPay memakai merchant/outlet yang benar-benar dipolling oleh facade. Lihat [Konsep inti](/guide/concepts).
+  Jangan menganggap merchant pertama atau outlet pertama selalu benar. QRIS
+  berasal dari `pops[].gopay.aspi_qr_string`. Scope GoPay memakai
+  merchant/outlet yang benar-benar dipolling oleh facade. Lihat [Konsep
+  inti](/guide/concepts).
 </Warning>
 
 ## CLI

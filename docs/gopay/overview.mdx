@@ -28,16 +28,16 @@ const gopay = new GopayProvider({
 
 Opsi utama config:
 
-| Opsi                     | Kegunaan                                                              |
-| ------------------------ | -------------------------------------------------------------------- |
-| `merchantId`             | Merchant id (mis. `"G000000001"`); wajib untuk polling transaksi     |
-| `session`                | Pulihkan sesi sebelumnya alih-alih login lagi                        |
-| `staticQris`             | Payload QRIS statis; bila kosong, ditemukan dari profil outlet       |
-| `onTokenRefreshed`       | Callback persistence setelah refresh token otomatis                  |
-| `store`                  | `PaymentStore` kustom; default in-memory                             |
-| `payment`                | Tuning polling/pembayaran (lihat [Model pembayaran](/concepts/payments)) |
-| `fetch`                  | Implementasi fetch kustom untuk runtime tanpa `fetch` global          |
-| `logger`                 | `Logger` kustom                                                      |
+| Opsi               | Kegunaan                                                                 |
+| ------------------ | ------------------------------------------------------------------------ |
+| `merchantId`       | Merchant id (mis. `"G000000001"`); wajib untuk polling transaksi         |
+| `session`          | Pulihkan sesi sebelumnya alih-alih login lagi                            |
+| `staticQris`       | Payload QRIS statis; bila kosong, ditemukan dari profil outlet           |
+| `onTokenRefreshed` | Callback persistence setelah refresh token otomatis                      |
+| `store`            | `PaymentStore` kustom; default in-memory                                 |
+| `payment`          | Tuning polling/pembayaran (lihat [Model pembayaran](/concepts/payments)) |
+| `fetch`            | Implementasi fetch kustom untuk runtime tanpa `fetch` global             |
+| `logger`           | `Logger` kustom                                                          |
 
 Lihat [Referensi API GopayProvider](/api/gopay-provider) untuk seluruh opsi.
 
@@ -51,7 +51,11 @@ Lihat [Referensi API GopayProvider](/api/gopay-provider) untuk seluruh opsi.
 - Device id stabil dipertahankan lintas sesi untuk header `x-uniqueid` yang konsisten.
 
 <Warning>
-  Access token GoPay berbentuk JWE yang klaim `exp`-nya tidak dapat dibaca, dan respons refresh tidak selalu menyediakan `expires_in`. `TokenManager` memakai fallback 30 menit sebagai perkiraan konservatif. Refresh token wajib dikirim tersarang di objek `data`; bentuk flat ditolak `401` generik. Lihat [Login GoPay](/gopay/login#refresh-token).
+  Access token GoPay berbentuk JWE yang klaim `exp`-nya tidak dapat dibaca, dan
+  respons refresh tidak selalu menyediakan `expires_in`. `TokenManager` memakai
+  fallback 30 menit sebagai perkiraan konservatif. Refresh token wajib dikirim
+  tersarang di objek `data`; bentuk flat ditolak `401` generik. Lihat [Login
+  GoPay](/gopay/login#refresh-token).
 </Warning>
 
 ## Halaman GoPay

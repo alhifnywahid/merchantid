@@ -52,7 +52,9 @@ await saveSecret("shopee-session", session);
 ```
 
 <Warning>
-  `ShopeeOtpChallenge`, `ShopeeOtpVerification`, dan `ShopeeSession` berisi cookie atau state autentikasi sensitif. Jangan mengirim objek tersebut ke browser, mencetaknya ke log, atau menyimpannya sebagai fixture.
+  `ShopeeOtpChallenge`, `ShopeeOtpVerification`, dan `ShopeeSession` berisi
+  cookie atau state autentikasi sensitif. Jangan mengirim objek tersebut ke
+  browser, mencetaknya ke log, atau menyimpannya sebagai fixture.
 </Warning>
 
 ## Langkah 1: requestOtp
@@ -60,7 +62,7 @@ await saveSecret("shopee-session", session);
 ```ts
 const challenge = await shopee.requestOtp("6281234567890", {
   password: passwordFromUser, // wajib bila akun dilindungi password
-  channel: 3,                 // opsional: 1=SMS, 2=panggilan, 3=WhatsApp
+  channel: 3, // opsional: 1=SMS, 2=panggilan, 3=WhatsApp
   deviceReport: reportFromBrowser, // opsional, lihat Device risk
 });
 ```
@@ -83,7 +85,7 @@ OTP wajib 4-10 digit. `verifyOtp` mengembalikan `ShopeeOtpVerification` berisi s
 const session = await shopee.completeLogin({
   verification,
   merchantId: merchant.id, // opsional bila hanya satu merchant usable
-  storeId,                 // opsional
+  storeId, // opsional
 });
 ```
 
@@ -110,7 +112,10 @@ if (outcome.status === "merchant-selection-required") {
 - `{ status: "merchant-selection-required", verification, merchants }` - akun mengakses lebih dari satu merchant usable dan tak ada `merchantId`. Bawa `verification` reusable dan daftar `merchants` agar picker dapat ditampilkan lalu diselesaikan dengan `completeLogin` - tanpa OTP kedua.
 
 <Note>
-  Perilaku ini menggantikan lemparan lama pada ambiguitas. Caller yang membaca sesi langsung harus switch pada `outcome.status` lebih dulu. Helper `usableMerchants(merchants)` dan `resolveSingleMerchant(merchants)` diekspor untuk mendeteksi ambiguitas sebelum berkomitmen pada login.
+  Perilaku ini menggantikan lemparan lama pada ambiguitas. Caller yang membaca
+  sesi langsung harus switch pada `outcome.status` lebih dulu. Helper
+  `usableMerchants(merchants)` dan `resolveSingleMerchant(merchants)` diekspor
+  untuk mendeteksi ambiguitas sebelum berkomitmen pada login.
 </Note>
 
 ## Login lewat CLI

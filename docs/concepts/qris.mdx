@@ -42,7 +42,10 @@ map.get("00"); // payload format indicator
 `encodeTlv(tag, value)` menserialkan satu elemen TLV dengan panjang dua digit (diukur dalam byte). Nilai lebih dari 99 byte ditolak karena tidak dapat dinyatakan dalam panjang dua digit.
 
 <Warning>
-  Parser menolak payload malformed dan panjang yang keluar dari batas dengan `QRIS_PARSE_ERROR`. Tanpa penjagaan itu, payload terpotong akan "berhasil" diparse lalu diterbitkan ulang di bawah CRC yang baru dihitung - data merchant korup yang memakai checksum valid.
+  Parser menolak payload malformed dan panjang yang keluar dari batas dengan
+  `QRIS_PARSE_ERROR`. Tanpa penjagaan itu, payload terpotong akan "berhasil"
+  diparse lalu diterbitkan ulang di bawah CRC yang baru dihitung - data merchant
+  korup yang memakai checksum valid.
 </Warning>
 
 ## Verifikasi checksum
@@ -65,12 +68,12 @@ crc16ccitt("00020101..."); // "A1B2" (uppercase hex)
 ```ts
 import { QRIS_TAGS } from "merchantid";
 
-QRIS_TAGS.payloadFormat;      // "00"
-QRIS_TAGS.pointOfInitiation;  // "01"
-QRIS_TAGS.transactionAmount;  // "54"
-QRIS_TAGS.crc;                // "63"
-QRIS_TAGS.poiStatic;          // "11"
-QRIS_TAGS.poiDynamic;         // "12"
+QRIS_TAGS.payloadFormat; // "00"
+QRIS_TAGS.pointOfInitiation; // "01"
+QRIS_TAGS.transactionAmount; // "54"
+QRIS_TAGS.crc; // "63"
+QRIS_TAGS.poiStatic; // "11"
+QRIS_TAGS.poiDynamic; // "12"
 ```
 
 ## Catatan keamanan

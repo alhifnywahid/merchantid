@@ -9,9 +9,9 @@ Semua tipe di bawah diekspor sebagai `import type` dari `merchantid`. Bagian ini
 
 ```ts
 interface PaymentScope {
-  provider: string;      // id provider stabil, mis. "gopay" atau "shopee"
-  accountId?: string;    // id akun provider bila tersedia
-  merchantId: string;    // id merchant/store native provider untuk polling
+  provider: string; // id provider stabil, mis. "gopay" atau "shopee"
+  accountId?: string; // id akun provider bila tersedia
+  merchantId: string; // id merchant/store native provider untuk polling
 }
 ```
 
@@ -24,15 +24,15 @@ type PaymentStatus = "pending" | "paid" | "expired" | "cancelled";
 
 interface Payment {
   id: string;
-  scope?: PaymentScope;          // dihilangkan hanya pada record unscoped eksplisit
-  baseAmount: number;            // nominal diminta merchant (rupiah penuh)
-  uniqueOffset: number;          // offset unik untuk disambiguasi
-  uniqueAmount: number;          // nominal yang harus ditransfer (base + offset)
+  scope?: PaymentScope; // dihilangkan hanya pada record unscoped eksplisit
+  baseAmount: number; // nominal diminta merchant (rupiah penuh)
+  uniqueOffset: number; // offset unik untuk disambiguasi
+  uniqueAmount: number; // nominal yang harus ditransfer (base + offset)
   status: PaymentStatus;
   createdAt: number;
   expiresAt: number;
-  reference?: string;            // referensi caller (order id internal)
-  qrString?: string;             // QRIS dinamis bila QRIS statis dikonfigurasi
+  reference?: string; // referensi caller (order id internal)
+  qrString?: string; // QRIS dinamis bila QRIS statis dikonfigurasi
   transaction?: MerchantTransaction; // transaksi tercocok setelah lunas
   metadata?: Record<string, unknown>;
 }
@@ -74,7 +74,10 @@ interface MerchantTransaction {
 
 ```ts
 interface TransactionLister {
-  list(merchantId: string, query: TransactionQuery): Promise<MerchantTransaction[]>;
+  list(
+    merchantId: string,
+    query: TransactionQuery,
+  ): Promise<MerchantTransaction[]>;
 }
 
 interface TransactionQuery {
@@ -135,7 +138,7 @@ Metode seperti `payments()`, `createPayment()`, dan `refreshSession()` ada di ti
 interface TokenSet {
   accessToken: string;
   refreshToken: string;
-  expiresAt?: number;   // epoch ms bila derivable
+  expiresAt?: number; // epoch ms bila derivable
   tokenType: string;
 }
 
@@ -168,7 +171,7 @@ interface MerchantOutlet {
   name?: string;
   status?: string;
   receiverId?: string;
-  qrString?: string;   // payload QRIS statis EMVCo outlet
+  qrString?: string; // payload QRIS statis EMVCo outlet
   raw: unknown;
 }
 
@@ -208,7 +211,11 @@ interface ShopeeSession {
   accountId: string;
   merchant: ShopeeMerchantSummary;
   merchants: ShopeeMerchantSummary[];
-  switchCredential?: { tocNonce: string; spcClientId: string; deviceFingerprint: string };
+  switchCredential?: {
+    tocNonce: string;
+    spcClientId: string;
+    deviceFingerprint: string;
+  };
   stores: ShopeeStore[];
   storeId?: string;
   createdAt: number;

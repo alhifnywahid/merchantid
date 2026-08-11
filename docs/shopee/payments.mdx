@@ -35,7 +35,7 @@ Scope Shopee memakai merchant bisnis sebagai `accountId` dan store terpilih seba
 ```ts
 interface ShopeeStaticQrisScope {
   merchantId: string; // business merchant
-  storeId: string;    // store pemilik
+  storeId: string; // store pemilik
 }
 ```
 
@@ -73,7 +73,9 @@ console.log(result.paid, result.expired);
 Shopee mengirim nominal seperti `"30.000"`. Parser hanya menerima digit polos atau kelompok ribuan Indonesia yang valid. Nilai ambigu seperti `"30.00"`, desimal, simbol mata uang, dan angka di luar safe integer ditolak.
 
 <Warning>
-  Jangan memakai `parseFloat`; `parseFloat("30.000")` menghasilkan 30 dan dapat melunasi pesanan salah. Parser ini diekspor sebagai `parseShopeeAmount` bila Anda membutuhkannya.
+  Jangan memakai `parseFloat`; `parseFloat("30.000")` menghasilkan 30 dan dapat
+  melunasi pesanan salah. Parser ini diekspor sebagai `parseShopeeAmount` bila
+  Anda membutuhkannya.
 </Warning>
 
 ### Hanya status 3 yang sukses
@@ -93,10 +95,18 @@ Reference `PaymentService` dari store lama menjadi inactive; `createPayment()`, 
 ## Referensi
 
 <CardGroup cols={2}>
-  <Card title="Model pembayaran" icon="money-bill-transfer" href="/concepts/payments">
+  <Card
+    title="Model pembayaran"
+    icon="money-bill-transfer"
+    href="/concepts/payments"
+  >
     Siklus, event, dan tuning.
   </Card>
-  <Card title="Referensi ShopeeProvider" icon="code" href="/api/shopee-provider">
+  <Card
+    title="Referensi ShopeeProvider"
+    icon="code"
+    href="/api/shopee-provider"
+  >
     setStaticQris, createPayment, payments.
   </Card>
 </CardGroup>

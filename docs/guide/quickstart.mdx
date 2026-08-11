@@ -6,30 +6,27 @@ description: "Dari login sampai mendeteksi pembayaran pertama, untuk GoPay dan S
 Halaman ini membawa Anda dari nol sampai pembayaran pertama yang terdeteksi. Cara tercepat mencoba adalah lewat CLI; integrasi kode ada di bawahnya.
 
 <Warning>
-  Setiap langkah di sini memakai API provider live. Pengiriman OTP, discovery, dan rekonsiliasi mengirim request nyata. Gunakan hanya akun merchant milik Anda sendiri.
+  Setiap langkah di sini memakai API provider live. Pengiriman OTP, discovery,
+  dan rekonsiliasi mengirim request nyata. Gunakan hanya akun merchant milik
+  Anda sendiri.
 </Warning>
 
 ## Jalur CLI (paling cepat)
 
 <Steps>
   <Step title="Login">
-    ```bash
-    npx merchantid login gopay
-    ```
-    CLI meminta nomor telepon dan OTP, lalu menyimpan sesi ke `~/.merchantid/config.json`. Untuk Shopee, `npx merchantid login shopee` juga meminta password akun.
+    ```bash npx merchantid login gopay ``` CLI meminta nomor telepon dan OTP,
+    lalu menyimpan sesi ke `~/.merchantid/config.json`. Untuk Shopee, `npx
+    merchantid login shopee` juga meminta password akun.
   </Step>
   <Step title="Periksa status">
-    ```bash
-    npx merchantid whoami
-    ```
-    Menampilkan provider default, jumlah merchant, dan apakah QRIS statis sudah terikat - semua ter-redaksi.
+    ```bash npx merchantid whoami ``` Menampilkan provider default, jumlah
+    merchant, dan apakah QRIS statis sudah terikat - semua ter-redaksi.
   </Step>
   <Step title="Pilih merchant dan QRIS">
-    ```bash
-    npx merchantid merchants gopay
-    npx merchantid set-merchant G000000001 --provider gopay
-    ```
-    Untuk Shopee, ikat QRIS statis secara manual dengan `npx merchantid set-qris shopee` setelah store dipilih.
+    ```bash npx merchantid merchants gopay npx merchantid set-merchant
+    G000000001 --provider gopay ``` Untuk Shopee, ikat QRIS statis secara manual
+    dengan `npx merchantid set-qris shopee` setelah store dipilih.
   </Step>
 </Steps>
 
@@ -113,7 +110,11 @@ Satu `tick()` menjalankan satu putaran rekonsiliasi: menarik feed, menyelesaikan
   <Card title="Konsep inti" icon="diagram-project" href="/guide/concepts">
     Kenapa nominal unik, scope, dan grace window penting.
   </Card>
-  <Card title="Model pembayaran" icon="money-bill-transfer" href="/concepts/payments">
+  <Card
+    title="Model pembayaran"
+    icon="money-bill-transfer"
+    href="/concepts/payments"
+  >
     Siklus lengkap create sampai settle/expire.
   </Card>
   <Card title="GoPay Merchant" icon="wallet" href="/gopay/overview">

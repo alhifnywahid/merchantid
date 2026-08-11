@@ -9,16 +9,20 @@ Semua adapter memakai alur inti yang sama, dikendalikan `PaymentService`. Halama
 
 <Steps>
   <Step title="Alokasi nominal unik">
-    `AmountAllocator` memilih nominal akhir unik dalam scope provider/account/merchant-store. Slot terkecil dipilih lebih dulu.
+    `AmountAllocator` memilih nominal akhir unik dalam scope
+    provider/account/merchant-store. Slot terkecil dipilih lebih dulu.
   </Step>
   <Step title="QRIS dinamis">
-    `staticToDynamicQris` menambahkan tag nominal EMV `54`, mengubah QRIS menjadi dinamis, dan menghitung ulang CRC - hanya bila static QRIS terkonfigurasi.
+    `staticToDynamicQris` menambahkan tag nominal EMV `54`, mengubah QRIS
+    menjadi dinamis, dan menghitung ulang CRC - hanya bila static QRIS
+    terkonfigurasi.
   </Step>
   <Step title="Ambil feed">
     Adapter provider mengambil serta menormalisasi feed menjadi rupiah utuh.
   </Step>
   <Step title="Cocokkan">
-    `PaymentService` mencocokkan nominal, status, waktu, dan scope. Satu transaksi hanya boleh melunasi satu pembayaran.
+    `PaymentService` mencocokkan nominal, status, waktu, dan scope. Satu
+    transaksi hanya boleh melunasi satu pembayaran.
   </Step>
 </Steps>
 
@@ -43,9 +47,9 @@ Panggilan konkuren diserialkan: membaca himpunan aktif dan menulis pembayaran ba
 interface Payment {
   id: string;
   scope?: PaymentScope;
-  baseAmount: number;    // nominal yang diminta merchant
-  uniqueOffset: number;  // offset unik yang ditambahkan
-  uniqueAmount: number;  // baseAmount + uniqueOffset
+  baseAmount: number; // nominal yang diminta merchant
+  uniqueOffset: number; // offset unik yang ditambahkan
+  uniqueAmount: number; // baseAmount + uniqueOffset
   status: "pending" | "paid" | "expired" | "cancelled";
   createdAt: number;
   expiresAt: number;
@@ -74,9 +78,15 @@ Satu `tick()` menjalankan satu putaran: menarik feed, menyelesaikan yang cocok, 
 
 ```ts
 const payments = provider.payments();
-payments.on("paid", (payment) => { /* Payment */ });
-payments.on("expired", (payment) => { /* Payment */ });
-payments.on("error", (error) => { /* Error */ });
+payments.on("paid", (payment) => {
+  /* Payment */
+});
+payments.on("expired", (payment) => {
+  /* Payment */
+});
+payments.on("error", (error) => {
+  /* Error */
+});
 ```
 
 Listener yang melempar diisolasi: exception-nya disurface-kan ke channel `error`, tidak membatalkan accounting tick yang sudah tersimpan ke store.
@@ -110,13 +120,13 @@ Default masa berlaku adalah 5 menit. Feed dapat terlambat mengindeks, terutama b
 
 Diteruskan lewat `payment` pada config provider:
 
-| Opsi                   | Default   | Kegunaan                                              |
-| ---------------------- | --------- | ----------------------------------------------------- |
-| `pollIntervalMs`       | `3000`    | Interval polling background                            |
-| `defaultExpiryMs`      | `300000`  | Masa berlaku default pembayaran                        |
-| `clockSkewMs`          | `60000`   | Toleransi skew jam untuk jendela dan karantina         |
-| `transactionPageSize`  | `100`     | Ukuran halaman feed, di-clamp ke limit provider (100)  |
-| `maxUniqueOffset`      | `999`     | Jendela offset nominal unik                            |
+| Opsi                  | Default  | Kegunaan                                              |
+| --------------------- | -------- | ----------------------------------------------------- |
+| `pollIntervalMs`      | `3000`   | Interval polling background                           |
+| `defaultExpiryMs`     | `300000` | Masa berlaku default pembayaran                       |
+| `clockSkewMs`         | `60000`  | Toleransi skew jam untuk jendela dan karantina        |
+| `transactionPageSize` | `100`    | Ukuran halaman feed, di-clamp ke limit provider (100) |
+| `maxUniqueOffset`     | `999`    | Jendela offset nominal unik                           |
 
 ## Referensi
 

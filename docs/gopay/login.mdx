@@ -33,6 +33,7 @@ CLI menyimpan konfigurasi provider-keyed di `~/.merchantid/config.json`. Simpan 
     }
     ```
     `requestOtp` menerima format nomor Indonesia apa pun (62/+62/08/8, dengan pemisah) dan mengirim GoID nomor subscriber polos plus country code. Ia mengembalikan `LoginRequestResult` dengan `otpToken` opsional.
+
   </Step>
   <Step title="Verifikasi OTP">
     ```ts

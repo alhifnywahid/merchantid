@@ -31,21 +31,26 @@ const shopee = new ShopeeProvider({
 
 Opsi utama config:
 
-| Opsi                | Kegunaan                                                                     |
-| ------------------- | ---------------------------------------------------------------------------- |
-| `merchantId`        | Business merchant id yang diinginkan bila akun mengakses beberapa            |
-| `storeId`           | Store id pemilik QRIS dan transaksi                                          |
-| `session`           | Pulihkan `ShopeeSession` yang diekspor sebelumnya                            |
-| `staticQris`        | Payload QRIS statis (diberikan manual)                                       |
-| `staticQrisScope`   | Owner QRIS (business merchant + store); wajib bila tak dapat diinfer         |
-| `deviceReport`      | Body device-risk report untuk setiap request OTP                            |
-| `onSessionUpdated`  | Callback persistence; token berotasi jadi wajib dipasang                    |
-| `store`             | `PaymentStore` kustom; default in-memory                                    |
-| `payment`           | Tuning polling/pembayaran                                                    |
-| `fetch` / `logger`  | Fetch dan logger kustom                                                      |
+| Opsi               | Kegunaan                                                             |
+| ------------------ | -------------------------------------------------------------------- |
+| `merchantId`       | Business merchant id yang diinginkan bila akun mengakses beberapa    |
+| `storeId`          | Store id pemilik QRIS dan transaksi                                  |
+| `session`          | Pulihkan `ShopeeSession` yang diekspor sebelumnya                    |
+| `staticQris`       | Payload QRIS statis (diberikan manual)                               |
+| `staticQrisScope`  | Owner QRIS (business merchant + store); wajib bila tak dapat diinfer |
+| `deviceReport`     | Body device-risk report untuk setiap request OTP                     |
+| `onSessionUpdated` | Callback persistence; token berotasi jadi wajib dipasang             |
+| `store`            | `PaymentStore` kustom; default in-memory                             |
+| `payment`          | Tuning polling/pembayaran                                            |
+| `fetch` / `logger` | Fetch dan logger kustom                                              |
 
 <Warning>
-  Token Shopee berotasi setiap pembaruan, jadi `onSessionUpdated` wajib dipasang agar sesi tersimpan tidak menjadi basi. `ShopeeOtpChallenge`, `ShopeeOtpVerification`, dan `ShopeeSession` berisi cookie atau state autentikasi sensitif. Jangan mengirim objek tersebut ke browser, mencetaknya ke log, atau menyimpannya sebagai fixture. Lihat [Keamanan](/security/overview).
+  Token Shopee berotasi setiap pembaruan, jadi `onSessionUpdated` wajib dipasang
+  agar sesi tersimpan tidak menjadi basi. `ShopeeOtpChallenge`,
+  `ShopeeOtpVerification`, dan `ShopeeSession` berisi cookie atau state
+  autentikasi sensitif. Jangan mengirim objek tersebut ke browser, mencetaknya
+  ke log, atau menyimpannya sebagai fixture. Lihat
+  [Keamanan](/security/overview).
 </Warning>
 
 ## Halaman Shopee

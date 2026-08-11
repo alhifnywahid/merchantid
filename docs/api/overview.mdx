@@ -7,41 +7,41 @@ Seluruh API publik diekspor dari entry tunggal `merchantid`. Apa yang tidak diek
 
 ## Registry dan provider
 
-| Ekspor                                | Jenis      | Halaman                                   |
-| ------------------------------------- | ---------- | ----------------------------------------- |
-| `MerchantId`, `createMerchantId`      | class/fn   | [MerchantId](/api/merchantid)             |
-| `GopayProvider`                       | class      | [GopayProvider](/api/gopay-provider)      |
-| `ShopeeProvider`                      | class      | [ShopeeProvider](/api/shopee-provider)    |
+| Ekspor                           | Jenis    | Halaman                                |
+| -------------------------------- | -------- | -------------------------------------- |
+| `MerchantId`, `createMerchantId` | class/fn | [MerchantId](/api/merchantid)          |
+| `GopayProvider`                  | class    | [GopayProvider](/api/gopay-provider)   |
+| `ShopeeProvider`                 | class    | [ShopeeProvider](/api/shopee-provider) |
 
 ## Pembayaran
 
-| Ekspor                                              | Jenis    | Halaman                                    |
-| --------------------------------------------------- | -------- | ------------------------------------------ |
-| `PaymentService`                                    | class    | [PaymentService](/api/payment-service)     |
-| `InMemoryPaymentStore`                              | class    | [PaymentStore](/concepts/payment-store)    |
-| `AmountAllocator`                                   | class    | [QRIS dan alokasi](/api/qris#amountallocator) |
-| `matchesPayment`, `reconcile`                       | fn       | [PaymentService](/api/payment-service#pencocokan) |
+| Ekspor                        | Jenis | Halaman                                           |
+| ----------------------------- | ----- | ------------------------------------------------- |
+| `PaymentService`              | class | [PaymentService](/api/payment-service)            |
+| `InMemoryPaymentStore`        | class | [PaymentStore](/concepts/payment-store)           |
+| `AmountAllocator`             | class | [QRIS dan alokasi](/api/qris#amountallocator)     |
+| `matchesPayment`, `reconcile` | fn    | [PaymentService](/api/payment-service#pencocokan) |
 
 ## QRIS dan CRC
 
-| Ekspor                                                                                | Jenis   | Halaman                |
-| ------------------------------------------------------------------------------------- | ------- | ---------------------- |
-| `parseEmv`, `buildEmv`, `encodeTlv`, `staticToDynamicQris`, `isValidQrisChecksum`     | fn      | [QRIS](/api/qris)       |
-| `QRIS_TAGS`                                                                            | const   | [QRIS](/api/qris#qris_tags) |
-| `crc16ccitt`                                                                          | fn      | [QRIS](/api/qris#crc16ccitt) |
+| Ekspor                                                                            | Jenis | Halaman                      |
+| --------------------------------------------------------------------------------- | ----- | ---------------------------- |
+| `parseEmv`, `buildEmv`, `encodeTlv`, `staticToDynamicQris`, `isValidQrisChecksum` | fn    | [QRIS](/api/qris)            |
+| `QRIS_TAGS`                                                                       | const | [QRIS](/api/qris#qris_tags)  |
+| `crc16ccitt`                                                                      | fn    | [QRIS](/api/qris#crc16ccitt) |
 
 ## Error
 
-| Ekspor                                                                                        | Halaman              |
-| --------------------------------------------------------------------------------------------- | -------------------- |
-| `MerchantIdError`, `ConfigError`, `AuthError`, `CaptchaRequiredError`, `HttpError`, `ApiError`| [Error](/api/errors) |
+| Ekspor                                                                                         | Halaman              |
+| ---------------------------------------------------------------------------------------------- | -------------------- |
+| `MerchantIdError`, `ConfigError`, `AuthError`, `CaptchaRequiredError`, `HttpError`, `ApiError` | [Error](/api/errors) |
 
 ## Logging dan HTTP
 
-| Ekspor                                            | Jenis   | Halaman                       |
-| ------------------------------------------------- | ------- | ----------------------------- |
-| `createConsoleLogger`, `noopLogger`               | fn/const| [Logging](/concepts/logging)  |
-| `HttpClient` (`GopayHttpClient`)                  | class   | [GopayProvider](/api/gopay-provider) |
+| Ekspor                              | Jenis    | Halaman                              |
+| ----------------------------------- | -------- | ------------------------------------ |
+| `createConsoleLogger`, `noopLogger` | fn/const | [Logging](/concepts/logging)         |
+| `HttpClient` (`GopayHttpClient`)    | class    | [GopayProvider](/api/gopay-provider) |
 
 ## Tipe
 

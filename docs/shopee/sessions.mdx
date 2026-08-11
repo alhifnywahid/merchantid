@@ -20,7 +20,10 @@ try {
 ## Sinyal liveness yang benar
 
 <Warning>
-  `exp` pada cookie dashboard Shopee berumur ~1000 hari dan **tidak** mencerminkan sesi server, jadi jangan memakainya untuk menilai sesi masih hidup. Getter `authenticated` hanya pemeriksaan struktural (cookie ada dan cocok dengan `accountId`), bukan bukti sesi server masih valid.
+  `exp` pada cookie dashboard Shopee berumur ~1000 hari dan **tidak**
+  mencerminkan sesi server, jadi jangan memakainya untuk menilai sesi masih
+  hidup. Getter `authenticated` hanya pemeriksaan struktural (cookie ada dan
+  cocok dengan `accountId`), bukan bukti sesi server masih valid.
 </Warning>
 
 Satu-satunya sinyal liveness yang jujur adalah `login_status`: selama ia menjawab `error:0`, token merchant dapat dicetak ulang; setelah menjawab "not login", akun harus login OTP baru. `refreshSession` sudah memeriksa ini untuk Anda.

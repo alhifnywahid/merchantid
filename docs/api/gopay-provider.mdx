@@ -13,21 +13,21 @@ const gopay = new GopayProvider({ merchantId: "G000000001" });
 
 ## GopayProviderConfig
 
-| Opsi                     | Tipe                                   | Default                | Kegunaan                                                    |
-| ------------------------ | -------------------------------------- | ---------------------- | ---------------------------------------------------------- |
-| `merchantId`             | `string`                               | resolve dari profil    | Merchant id (mis. `"G000000001"`); wajib untuk polling     |
-| `session`                | `SessionState`                         | -                      | Restore sesi sebelumnya alih-alih login ulang              |
-| `staticQris`             | `string`                               | resolve dari profil    | QRIS statis outlet untuk turunan QRIS dinamis              |
-| `clientId`               | `string`                               | bawaan                 | Override client id GoID                                     |
-| `appVersion`             | `string`                               | `DEFAULT_APP_VERSION`  | Override header versi aplikasi                             |
-| `deviceId`               | `string`                               | dari sesi atau acak    | Device id stabil                                           |
-| `store`                  | `PaymentStore`                         | `InMemoryPaymentStore` | Backend pembayaran durable                                 |
-| `payment`               | lihat di bawah                          | -                      | Penyetelan polling dan pembayaran                          |
-| `onTokenRefreshed`       | `(session) => void \| Promise<void>`   | -                      | Callback persist setelah auto-refresh token                |
-| `refreshBeforeExpiryMs`  | `number`                               | `300000` (5 menit)     | Refresh token sekian ms sebelum kedaluwarsa                |
-| `requestTimeoutMs`       | `number`                               | `20000`                | Timeout request                                            |
-| `fetch`                  | `FetchLike`                            | `globalThis.fetch`     | Implementasi fetch kustom                                  |
-| `logger`                 | `Logger`                               | `noopLogger`           | Logger terstruktur                                         |
+| Opsi                    | Tipe                                 | Default                | Kegunaan                                               |
+| ----------------------- | ------------------------------------ | ---------------------- | ------------------------------------------------------ |
+| `merchantId`            | `string`                             | resolve dari profil    | Merchant id (mis. `"G000000001"`); wajib untuk polling |
+| `session`               | `SessionState`                       | -                      | Restore sesi sebelumnya alih-alih login ulang          |
+| `staticQris`            | `string`                             | resolve dari profil    | QRIS statis outlet untuk turunan QRIS dinamis          |
+| `clientId`              | `string`                             | bawaan                 | Override client id GoID                                |
+| `appVersion`            | `string`                             | `DEFAULT_APP_VERSION`  | Override header versi aplikasi                         |
+| `deviceId`              | `string`                             | dari sesi atau acak    | Device id stabil                                       |
+| `store`                 | `PaymentStore`                       | `InMemoryPaymentStore` | Backend pembayaran durable                             |
+| `payment`               | lihat di bawah                       | -                      | Penyetelan polling dan pembayaran                      |
+| `onTokenRefreshed`      | `(session) => void \| Promise<void>` | -                      | Callback persist setelah auto-refresh token            |
+| `refreshBeforeExpiryMs` | `number`                             | `300000` (5 menit)     | Refresh token sekian ms sebelum kedaluwarsa            |
+| `requestTimeoutMs`      | `number`                             | `20000`                | Timeout request                                        |
+| `fetch`                 | `FetchLike`                          | `globalThis.fetch`     | Implementasi fetch kustom                              |
+| `logger`                | `Logger`                             | `noopLogger`           | Logger terstruktur                                     |
 
 Objek `payment` menerima `pollIntervalMs`, `defaultExpiryMs`, `clockSkewMs`, `transactionPageSize`, dan `maxUniqueOffset`.
 
@@ -42,33 +42,33 @@ verifyOtp(params: { otp: string; otpToken: string; phoneNumber?: string; country
 
 ## Sesi dan token
 
-| Metode                                       | Kembalian                    | Kegunaan                                          |
-| -------------------------------------------- | ---------------------------- | ------------------------------------------------- |
-| `get authenticated`                          | `boolean`                    | Ada `TokenManager` aktif                          |
-| `refreshSession()`                           | `Promise<TokenSet>`          | Paksa refresh via `TokenManager` (melempar `AUTH_REQUIRED` bila belum login) |
-| `exportSession()`                            | `SessionState`               | Ekspor sesi untuk persist (melempar bila belum login) |
+| Metode              | Kembalian           | Kegunaan                                                                     |
+| ------------------- | ------------------- | ---------------------------------------------------------------------------- |
+| `get authenticated` | `boolean`           | Ada `TokenManager` aktif                                                     |
+| `refreshSession()`  | `Promise<TokenSet>` | Paksa refresh via `TokenManager` (melempar `AUTH_REQUIRED` bila belum login) |
+| `exportSession()`   | `SessionState`      | Ekspor sesi untuk persist (melempar bila belum login)                        |
 
 `TokenManager` menyegarkan token otomatis sebelum kedaluwarsa, mengulang request 401 secara transparan, dan menjaga device id stabil. Refresh token tersarang di `data` pada respons GoID. Lihat [Login GoPay](/gopay/login).
 
 ## Merchant dan QRIS
 
-| Metode                              | Kembalian                          | Kegunaan                                                  |
-| ----------------------------------- | ---------------------------------- | -------------------------------------------------------- |
-| `resolveMerchantId()`               | `Promise<string \| undefined>`     | Resolve dan cache merchant id dari `/v1/users/me`        |
-| `resolveStaticQris(popId?)`         | `Promise<string \| undefined>`     | Resolve QRIS outlet dari profil merchant                 |
-| `listMerchants(limit?)`             | `Promise<StoredMerchant[]>`        | Enumerasi semua merchant yang dapat diakses (default 200)|
-| `getMerchantProfile()`              | `Promise<MerchantProfile>`         | Profil merchant aktif                                    |
-| `get staticQris`                    | `string \| undefined`              | QRIS outlet yang teresolusi atau dikonfigurasi           |
-| `getPaymentScope()`                 | `PaymentScope \| undefined`        | `{ provider: "gopay", merchantId }` bila id ada          |
+| Metode                      | Kembalian                      | Kegunaan                                                  |
+| --------------------------- | ------------------------------ | --------------------------------------------------------- |
+| `resolveMerchantId()`       | `Promise<string \| undefined>` | Resolve dan cache merchant id dari `/v1/users/me`         |
+| `resolveStaticQris(popId?)` | `Promise<string \| undefined>` | Resolve QRIS outlet dari profil merchant                  |
+| `listMerchants(limit?)`     | `Promise<StoredMerchant[]>`    | Enumerasi semua merchant yang dapat diakses (default 200) |
+| `getMerchantProfile()`      | `Promise<MerchantProfile>`     | Profil merchant aktif                                     |
+| `get staticQris`            | `string \| undefined`          | QRIS outlet yang teresolusi atau dikonfigurasi            |
+| `getPaymentScope()`         | `PaymentScope \| undefined`    | `{ provider: "gopay", merchantId }` bila id ada           |
 
 Client tingkat rendah `auth` (`AuthClient`), `merchant` (`MerchantClient`), dan `transactions` (`TransactionClient`) diekspos sebagai properti readonly untuk kebutuhan lanjutan. Lihat [Merchant GoPay](/gopay/merchants).
 
 ## Pembayaran
 
-| Metode                          | Kembalian            | Kegunaan                                        |
-| ------------------------------- | -------------------- | ----------------------------------------------- |
-| `payments()`                    | `PaymentService`     | Service pembayaran (lazy; wajib login + merchant id) |
-| `createPayment(input)`          | `Promise<Payment>`   | Shortcut `payments().createPayment(input)`      |
+| Metode                 | Kembalian          | Kegunaan                                             |
+| ---------------------- | ------------------ | ---------------------------------------------------- |
+| `payments()`           | `PaymentService`   | Service pembayaran (lazy; wajib login + merchant id) |
+| `createPayment(input)` | `Promise<Payment>` | Shortcut `payments().createPayment(input)`           |
 
 Lihat [Pembayaran GoPay](/gopay/payments) dan [PaymentService](/api/payment-service).
 

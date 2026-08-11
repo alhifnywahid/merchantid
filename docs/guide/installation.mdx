@@ -12,7 +12,10 @@ npm install merchantid
 MerchantId tidak memiliki dependency runtime dan memakai `fetch` global. Node.js 18 atau runtime lain dengan Web Fetch API dapat menjalankan library.
 
 <Note>
-  Nama paket dan binary CLI adalah `merchantid`. Versi `0.1.0` sempat dipublikasikan dengan nama `merchid`; sejak `0.1.1` paket bernama `merchantid`. Jika Anda pernah memakai `merchid`, pasang ulang dengan `npm install merchantid` dan ganti perintah CLI dari `merchid` ke `merchantid`.
+  Nama paket dan binary CLI adalah `merchantid`. Versi `0.1.0` sempat
+  dipublikasikan dengan nama `merchid`; sejak `0.1.1` paket bernama
+  `merchantid`. Jika Anda pernah memakai `merchid`, pasang ulang dengan `npm
+  install merchantid` dan ganti perintah CLI dari `merchid` ke `merchantid`.
 </Note>
 
 ## Impor
@@ -27,6 +30,7 @@ import { MerchantId, GopayProvider, ShopeeProvider } from "merchantid";
 ```js CommonJS
 const { MerchantId, GopayProvider, ShopeeProvider } = require("merchantid");
 ```
+
 </CodeGroup>
 
 Seluruh API publik diekspor dari entry tunggal `merchantid`. Tidak ada subpath import lain selain `merchantid/package.json`. Lihat [Referensi API](/api/overview) untuk daftar lengkap ekspor.

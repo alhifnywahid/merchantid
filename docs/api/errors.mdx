@@ -50,26 +50,26 @@ type MerchantIdErrorCode =
   | "QRIS_PARSE_ERROR";
 ```
 
-| Kode                    | Arti                                                                    |
-| ----------------------- | ----------------------------------------------------------------------- |
-| `CONFIG_INVALID`        | Konfigurasi atau argumen tidak valid                                    |
-| `AUTH_REQUIRED`         | Belum terautentikasi atau sesi mati; login (ulang) diperlukan           |
-| `AUTH_FAILED`           | Kredensial ditolak atau sesi dicabut oleh provider                      |
-| `CAPTCHA_REQUIRED`      | Provider meminta CAPTCHA; otomasi berhenti                              |
-| `HTTP_ERROR`            | Respons HTTP non-sukses dari provider                                   |
-| `API_ERROR`             | Provider mengembalikan error tingkat aplikasi                           |
-| `AMOUNT_POOL_EXHAUSTED` | Semua offset nominal unik untuk base amount terpakai                    |
-| `QRIS_PARSE_ERROR`      | Payload QRIS malformed, checksum invalid, atau nilai di luar batas      |
+| Kode                    | Arti                                                               |
+| ----------------------- | ------------------------------------------------------------------ |
+| `CONFIG_INVALID`        | Konfigurasi atau argumen tidak valid                               |
+| `AUTH_REQUIRED`         | Belum terautentikasi atau sesi mati; login (ulang) diperlukan      |
+| `AUTH_FAILED`           | Kredensial ditolak atau sesi dicabut oleh provider                 |
+| `CAPTCHA_REQUIRED`      | Provider meminta CAPTCHA; otomasi berhenti                         |
+| `HTTP_ERROR`            | Respons HTTP non-sukses dari provider                              |
+| `API_ERROR`             | Provider mengembalikan error tingkat aplikasi                      |
+| `AMOUNT_POOL_EXHAUSTED` | Semua offset nominal unik untuk base amount terpakai               |
+| `QRIS_PARSE_ERROR`      | Payload QRIS malformed, checksum invalid, atau nilai di luar batas |
 
 ## Subclass
 
-| Kelas                  | Kode                              | Anggota tambahan                | Kapan                                                    |
-| ---------------------- | --------------------------------- | ------------------------------- | -------------------------------------------------------- |
-| `ConfigError`          | `CONFIG_INVALID`                  | -                               | Konfigurasi/argumen invalid                              |
-| `AuthError`            | `AUTH_REQUIRED` atau `AUTH_FAILED`| -                               | Masalah autentikasi/sesi                                 |
-| `CaptchaRequiredError` | `CAPTCHA_REQUIRED`                | -                               | CAPTCHA diminta                                          |
-| `HttpError`            | `HTTP_ERROR`                      | `status: number`, `body: unknown` | Respons HTTP non-sukses                                |
-| `ApiError`             | `API_ERROR`                      | `apiCode?: string`              | Error tingkat aplikasi provider                          |
+| Kelas                  | Kode                               | Anggota tambahan                  | Kapan                           |
+| ---------------------- | ---------------------------------- | --------------------------------- | ------------------------------- |
+| `ConfigError`          | `CONFIG_INVALID`                   | -                                 | Konfigurasi/argumen invalid     |
+| `AuthError`            | `AUTH_REQUIRED` atau `AUTH_FAILED` | -                                 | Masalah autentikasi/sesi        |
+| `CaptchaRequiredError` | `CAPTCHA_REQUIRED`                 | -                                 | CAPTCHA diminta                 |
+| `HttpError`            | `HTTP_ERROR`                       | `status: number`, `body: unknown` | Respons HTTP non-sukses         |
+| `ApiError`             | `API_ERROR`                        | `apiCode?: string`                | Error tingkat aplikasi provider |
 
 `MerchantIdError`, `AmountAllocator` (`AMOUNT_POOL_EXHAUSTED`), dan utilitas QRIS (`QRIS_PARSE_ERROR`) melempar `MerchantIdError` dasar dengan kode terkait, bukan subclass khusus.
 
@@ -84,8 +84,8 @@ try {
   await shopee.getMerchantProfile();
 } catch (err) {
   if (err instanceof HttpError) {
-    console.log(err.status);        // aman
-    inspect(err.body);              // sengaja; jangan log mentah
+    console.log(err.status); // aman
+    inspect(err.body); // sengaja; jangan log mentah
   }
 }
 ```

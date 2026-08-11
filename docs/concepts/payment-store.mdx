@@ -67,7 +67,11 @@ Store production wajib:
 - **Menyimpan klaim transaksi atau jaminan ekuivalen bila proses dapat restart.**
 
 <Warning>
-  `PaymentService` memfilter scope lagi sebagai pertahanan terhadap store lama, tetapi itu bukan pengganti constraint database. Karantina nominal dan ingatan transaksi terkonsumsi hidup di memori proses; restart dan multi-process memerlukan jaminan persistence pada store. Lihat [Konsep inti](/guide/concepts).
+  `PaymentService` memfilter scope lagi sebagai pertahanan terhadap store lama,
+  tetapi itu bukan pengganti constraint database. Karantina nominal dan ingatan
+  transaksi terkonsumsi hidup di memori proses; restart dan multi-process
+  memerlukan jaminan persistence pada store. Lihat [Konsep
+  inti](/guide/concepts).
 </Warning>
 
 ## Scope dan record tanpa scope

@@ -8,7 +8,7 @@ description: "Registry lintas provider: mendaftarkan provider, memilih default, 
 ## createMerchantId
 
 ```ts
-function createMerchantId(config?: MerchantIdConfig): MerchantId
+function createMerchantId(config?: MerchantIdConfig): MerchantId;
 ```
 
 Membuat registry kosong (atau terisi bila `config.providers` diberikan). Setara dengan `new MerchantId(config)`.
@@ -35,18 +35,18 @@ interface RegisteredMerchantProvider {
 
 ## Metode
 
-| Metode                                       | Kembalian                        | Kegunaan                                                       |
-| -------------------------------------------- | -------------------------------- | ------------------------------------------------------------- |
-| `register(provider, options?)`               | `void`                           | Daftarkan provider; `{ makeDefault: true }` menjadikannya default |
-| `unregister(providerId)`                     | `boolean`                        | Cabut provider; `true` bila ada yang dicabut                  |
-| `get(providerId)`                            | `MerchantProvider \| undefined`  | Ambil provider berdasarkan id                                 |
-| `require(providerId)`                        | `MerchantProvider`               | Seperti `get`, tetapi melempar `ConfigError` bila tidak ada   |
-| `has(providerId)`                            | `boolean`                        | Cek keberadaan                                                |
-| `list()`                                     | `MerchantIdProviderSummary[]`    | Ringkasan semua provider terdaftar                            |
-| `getDefault()`                               | `MerchantProvider \| undefined`  | Provider default aktif                                        |
-| `requireDefault()`                           | `MerchantProvider`               | Default aktif atau melempar `ConfigError`                     |
-| `setDefault(providerId)`                     | `void`                           | Set provider default; melempar bila id tak dikenal            |
-| `get defaultProviderId`                      | `string \| undefined`            | Id provider default aktif                                     |
+| Metode                         | Kembalian                       | Kegunaan                                                          |
+| ------------------------------ | ------------------------------- | ----------------------------------------------------------------- |
+| `register(provider, options?)` | `void`                          | Daftarkan provider; `{ makeDefault: true }` menjadikannya default |
+| `unregister(providerId)`       | `boolean`                       | Cabut provider; `true` bila ada yang dicabut                      |
+| `get(providerId)`              | `MerchantProvider \| undefined` | Ambil provider berdasarkan id                                     |
+| `require(providerId)`          | `MerchantProvider`              | Seperti `get`, tetapi melempar `ConfigError` bila tidak ada       |
+| `has(providerId)`              | `boolean`                       | Cek keberadaan                                                    |
+| `list()`                       | `MerchantIdProviderSummary[]`   | Ringkasan semua provider terdaftar                                |
+| `getDefault()`                 | `MerchantProvider \| undefined` | Provider default aktif                                            |
+| `requireDefault()`             | `MerchantProvider`              | Default aktif atau melempar `ConfigError`                         |
+| `setDefault(providerId)`       | `void`                          | Set provider default; melempar bila id tak dikenal                |
+| `get defaultProviderId`        | `string \| undefined`           | Id provider default aktif                                         |
 
 ## MerchantIdProviderSummary
 

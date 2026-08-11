@@ -8,8 +8,8 @@ Satu akun Shopee dapat mengakses beberapa business merchant, dan tiap merchant d
 ## Merchant yang dapat diakses
 
 ```ts
-const merchants = shopee.merchants;         // dari sesi login
-const active = shopee.activeMerchant;       // merchant aktif saat ini
+const merchants = shopee.merchants; // dari sesi login
+const active = shopee.activeMerchant; // merchant aktif saat ini
 ```
 
 `shopee.merchants` mengembalikan `ShopeeMerchantSummary[]` - setiap business merchant yang dapat ditukar sesi. `activeMerchant` adalah merchant aktif, atau `undefined` bila belum terautentikasi.
@@ -39,7 +39,14 @@ const session = await shopee.selectMerchant(targetMerchantId);
 Store merchant tujuan ditemukan ulang otomatis. Penggantian ditolak selama scope aktif masih punya payment berjalan.
 
 <Note>
-  `SwitchMerchant` bawaan Shopee tidak dapat dipakai headless: token yang dikembalikannya ditolak dashboard API (`200020`) di luar browser sungguhan. Sebagai gantinya, `selectMerchant` mengulang rantai login token exchange (`login_toc` → `/account/login/tob/auth`) untuk staff user id merchant tujuan, memakai kembali `switchCredential` yang ditangkap saat login. Itu rantai yang sama dengan login segar dan mencetak token yang diterima API. Sesi lama tanpa `switchCredential` (mis. diimpor dari cookie mentah) tidak dapat berganti dan harus login ulang.
+  `SwitchMerchant` bawaan Shopee tidak dapat dipakai headless: token yang
+  dikembalikannya ditolak dashboard API (`200020`) di luar browser sungguhan.
+  Sebagai gantinya, `selectMerchant` mengulang rantai login token exchange
+  (`login_toc` → `/account/login/tob/auth`) untuk staff user id merchant tujuan,
+  memakai kembali `switchCredential` yang ditangkap saat login. Itu rantai yang
+  sama dengan login segar dan mencetak token yang diterima API. Sesi lama tanpa
+  `switchCredential` (mis. diimpor dari cookie mentah) tidak dapat berganti dan
+  harus login ulang.
 </Note>
 
 ## Discovery dan pemilihan store

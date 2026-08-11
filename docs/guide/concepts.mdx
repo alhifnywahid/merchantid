@@ -23,9 +23,9 @@ Setiap pembayaran menyimpan kepemilikan eksplisit sehingga transaksi satu provid
 
 ```ts
 interface PaymentScope {
-  provider: string;    // "gopay" | "shopee"
-  accountId?: string;  // business merchant Shopee; opsional untuk GoPay
-  merchantId: string;  // merchant GoPay, atau storeId Shopee
+  provider: string; // "gopay" | "shopee"
+  accountId?: string; // business merchant Shopee; opsional untuk GoPay
+  merchantId: string; // merchant GoPay, atau storeId Shopee
 }
 ```
 
@@ -67,7 +67,11 @@ Matcher menolak status gagal yang **dikenal**, tetapi menerima status kosong/tid
   <Card title="Utilitas QRIS" icon="qrcode" href="/concepts/qris">
     Cara nominal ditanam ke payload EMV.
   </Card>
-  <Card title="Model pembayaran" icon="money-bill-transfer" href="/concepts/payments">
+  <Card
+    title="Model pembayaran"
+    icon="money-bill-transfer"
+    href="/concepts/payments"
+  >
     Siklus create, poll, settle, expire.
   </Card>
 </CardGroup>

@@ -45,7 +45,12 @@ Level di bawah `minLevel` diabaikan. Urutan level: `debug` (10) < `info` (20) < 
 ## Aturan: jangan bocorkan kredensial
 
 <Warning>
-  Jangan pernah menulis token, cookie, OTP, challenge, QRIS asli, atau credential ke log. Library sudah menjaga ini: `HttpClient` mendeskripsikan request hanya sebagai host + path (bukan URL penuh yang bisa memuat query string sensitif), dan `HttpError` menyimpan body respons secara non-enumerable agar tidak tercetak `console.error`. Logger Anda tidak boleh mengembalikan disiplin ini. Lihat [Keamanan](/security/overview).
+  Jangan pernah menulis token, cookie, OTP, challenge, QRIS asli, atau
+  credential ke log. Library sudah menjaga ini: `HttpClient` mendeskripsikan
+  request hanya sebagai host + path (bukan URL penuh yang bisa memuat query
+  string sensitif), dan `HttpError` menyimpan body respons secara non-enumerable
+  agar tidak tercetak `console.error`. Logger Anda tidak boleh mengembalikan
+  disiplin ini. Lihat [Keamanan](/security/overview).
 </Warning>
 
 Untuk diagnostik CLI, set env `MERCHANTID_DEBUG`. Debug CLI tetap tidak boleh mencetak token, cookie, OTP, atau QRIS - ia hanya menampilkan sinyal ada/tidak (misalnya "OTP challenge received: yes").

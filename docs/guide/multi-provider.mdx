@@ -57,15 +57,15 @@ interface MerchantProvider<TSession = SessionState> {
 
 ## Registry API
 
-| Method                        | Kegunaan                                                                      |
-| ----------------------------- | ----------------------------------------------------------------------------- |
-| `register(provider)`          | Daftarkan adapter; `providerId` wajib huruf kecil, angka, dan tanda hubung    |
-| `has(providerId)`             | Cek apakah provider terdaftar                                                 |
-| `getProvider(providerId?)`    | Ambil provider; tanpa argumen mengembalikan default                          |
-| `setDefaultProvider(id)`      | Pilih provider default                                                        |
-| `defaultProviderId`           | Getter id provider default                                                    |
-| `listProviders()`             | Ringkasan setiap provider: `authenticated`, `paymentScope`, `hasStaticQris`   |
-| `exportSessions()`            | Kumpulkan sesi setiap provider yang terautentikasi                            |
+| Method                     | Kegunaan                                                                    |
+| -------------------------- | --------------------------------------------------------------------------- |
+| `register(provider)`       | Daftarkan adapter; `providerId` wajib huruf kecil, angka, dan tanda hubung  |
+| `has(providerId)`          | Cek apakah provider terdaftar                                               |
+| `getProvider(providerId?)` | Ambil provider; tanpa argumen mengembalikan default                         |
+| `setDefaultProvider(id)`   | Pilih provider default                                                      |
+| `defaultProviderId`        | Getter id provider default                                                  |
+| `listProviders()`          | Ringkasan setiap provider: `authenticated`, `paymentScope`, `hasStaticQris` |
+| `exportSessions()`         | Kumpulkan sesi setiap provider yang terautentikasi                          |
 
 Provider pertama yang didaftarkan otomatis menjadi default sampai `setDefaultProvider` dipanggil. Mendaftarkan id yang sama dua kali, atau memilih provider yang belum terdaftar, melempar `ConfigError`.
 

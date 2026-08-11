@@ -57,7 +57,8 @@ const { paid, expired } = await gopay.payments().tick();
 GoBiz `merchant-analytics/v2` mengirim satuan minor ISO 4217. Rp 3.001 datang sebagai `gross_amount: 300100`. `TransactionClient` membagi tepat dengan 100. Nilai pecahan sengaja tidak dibulatkan agar gagal cocok dengan aman.
 
 <Warning>
-  Jangan membuat matcher menerima skala mentah dan skala rupiah sekaligus. Transaksi Rp 300.100 dapat keliru melunasi pesanan Rp 3.001.
+  Jangan membuat matcher menerima skala mentah dan skala rupiah sekaligus.
+  Transaksi Rp 300.100 dapat keliru melunasi pesanan Rp 3.001.
 </Warning>
 
 ### Page size maksimum 100
@@ -81,10 +82,18 @@ Untuk kebutuhan lanjutan, feed dapat dibaca langsung lewat `GopayTransactionClie
 ## Referensi
 
 <CardGroup cols={2}>
-  <Card title="Model pembayaran" icon="money-bill-transfer" href="/concepts/payments">
+  <Card
+    title="Model pembayaran"
+    icon="money-bill-transfer"
+    href="/concepts/payments"
+  >
     Siklus, event, dan tuning.
   </Card>
-  <Card title="Referensi PaymentService" icon="code" href="/api/payment-service">
+  <Card
+    title="Referensi PaymentService"
+    icon="code"
+    href="/api/payment-service"
+  >
     Seluruh method dan opsi.
   </Card>
 </CardGroup>

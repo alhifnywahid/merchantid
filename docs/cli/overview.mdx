@@ -24,18 +24,18 @@ merchantid set-store <storeId>
 merchantid set-qris [gopay|shopee]
 ```
 
-| Perintah                     | Kegunaan                                                        |
-| ---------------------------- | -------------------------------------------------------------- |
-| `login [provider]`           | Login OTP interaktif                                           |
-| `session [provider]`         | Tampilkan sesi tersimpan yang ter-mask                        |
-| `session [provider] --reveal`| Tampilkan sesi tanpa mask (hanya di terminal privat)          |
-| `merchants [provider]`       | Daftar merchant dan outlet/store                              |
-| `stores [provider]`          | Alias untuk listing outlet/store                              |
-| `whoami`                     | Status ter-redaksi untuk semua provider                       |
-| `set-provider <id>`          | Set provider default                                          |
-| `set-merchant <id>`          | Set merchant default GoPay (`--provider gopay`)               |
-| `set-store <id>`             | Set store default Shopee                                      |
-| `set-qris [provider]`        | Prompt QRIS statis secara aman                                |
+| Perintah                      | Kegunaan                                             |
+| ----------------------------- | ---------------------------------------------------- |
+| `login [provider]`            | Login OTP interaktif                                 |
+| `session [provider]`          | Tampilkan sesi tersimpan yang ter-mask               |
+| `session [provider] --reveal` | Tampilkan sesi tanpa mask (hanya di terminal privat) |
+| `merchants [provider]`        | Daftar merchant dan outlet/store                     |
+| `stores [provider]`           | Alias untuk listing outlet/store                     |
+| `whoami`                      | Status ter-redaksi untuk semua provider              |
+| `set-provider <id>`           | Set provider default                                 |
+| `set-merchant <id>`           | Set merchant default GoPay (`--provider gopay`)      |
+| `set-store <id>`              | Set store default Shopee                             |
+| `set-qris [provider]`         | Prompt QRIS statis secara aman                       |
 
 ## Login
 
@@ -59,7 +59,9 @@ npx merchantid whoami
 `session` menampilkan sesi tersimpan dengan seluruh kredensial ter-mask secara default. `--reveal` menampilkan nilai penuh dan hanya boleh dipakai di terminal privat. `whoami` menampilkan lokasi config dan state ter-redaksi tiap provider (login atau tidak, jumlah merchant, apakah QRIS terikat).
 
 <Warning>
-  `session --reveal` mencetak token, cookie, dan `switchCredential`. Jalankan hanya di terminal privat. Untuk Shopee, `switchCredential` juga di-mask tanpa `--reveal` karena dapat mencetak token merchant tanpa OTP kedua.
+  `session --reveal` mencetak token, cookie, dan `switchCredential`. Jalankan
+  hanya di terminal privat. Untuk Shopee, `switchCredential` juga di-mask tanpa
+  `--reveal` karena dapat mencetak token merchant tanpa OTP kedua.
 </Warning>
 
 ## Binding QRIS
@@ -84,22 +86,27 @@ Lokasi default adalah `~/.merchantid/config.json`. Gunakan env `MERCHANTID_CONFI
       "session": { "tokens": {}, "deviceId": "..." },
       "merchants": [],
       "defaultMerchantId": "G000000001",
-      "staticQris": "000201..."
+      "staticQris": "000201...",
     },
     "shopee": {
       "session": { "version": 1, "cookies": [], "merchant": {}, "stores": [] },
       "staticQris": "000201...",
       "staticQrisScope": {
         "merchantId": "123456789",
-        "storeId": "987654321"
-      }
-    }
-  }
+        "storeId": "987654321",
+      },
+    },
+  },
 }
 ```
 
 <Warning>
-  File config memuat kredensial dan tidak boleh dikomit. `session` GoPay memuat access/refresh token; sesi Shopee memuat cookie yang dapat memberi akses merchant. QRIS Shopee juga sensitif dan metadata owner-nya mencegah payload dipakai pada store berbeda. Jangan menyalin konfigurasi asli ke issue. Contoh di atas sengaja tanpa trailing comma: file dibaca dengan `JSON.parse`, sehingga koma di akhir ditolak.
+  File config memuat kredensial dan tidak boleh dikomit. `session` GoPay memuat
+  access/refresh token; sesi Shopee memuat cookie yang dapat memberi akses
+  merchant. QRIS Shopee juga sensitif dan metadata owner-nya mencegah payload
+  dipakai pada store berbeda. Jangan menyalin konfigurasi asli ke issue. Contoh
+  di atas sengaja tanpa trailing comma: file dibaca dengan `JSON.parse`,
+  sehingga koma di akhir ditolak.
 </Warning>
 
 ## Debug
