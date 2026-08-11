@@ -191,7 +191,16 @@ Badan commit menjelaskan alasan dan risiko. Jangan commit, tag, publish, atau me
 
 Laporkan celah keamanan secara privat, bukan melalui issue publik.
 
-Publish npm hanya berjalan dari GitHub Release melalui npm Trusted Publishing (OIDC). Jangan menjalankan `npm publish` lokal dan jangan menambahkan `NODE_AUTH_TOKEN` atau secret npm ke workflow.
+Publish npm berjalan otomatis lewat npm Trusted Publishing (OIDC), dipicu oleh **tag versi** yang di-push. Jangan menjalankan `npm publish` lokal dan jangan menambahkan `NODE_AUTH_TOKEN` atau secret npm ke workflow.
+
+Alur rilis (dari branch default yang bersih dan hijau):
+
+```bash
+npm version patch   # atau minor / major — bump package.json, commit, buat tag vX.Y.Z
+git push --follow-tags
+```
+
+Push tag `v*` menjalankan `.github/workflows/publish.yml`: ia memverifikasi tag cocok dengan `package.json`, menjalankan typecheck/lint/format/test/build, `npm publish --provenance`, lalu membuat GitHub Release berisi catatan otomatis. Release baru muncul **setelah** publish sukses, jadi keberadaan Release menandakan versi benar-benar live di npm. Pilih bump sesuai [SemVer](https://semver.org): `patch` untuk perbaikan, `minor` untuk fitur kompatibel, `major` untuk perubahan yang memutus kompatibilitas.
 
 ## Lisensi
 
