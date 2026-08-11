@@ -47,19 +47,19 @@ Development lab multi-provider memakai package root lewat `merchantid: file:../.
 
 ```powershell
 npm run build
-Set-Location .example/web
+Set-Location .example/development/web
 npm install
 npm run dev
 ```
 
-`.example/web` adalah utility TanStack Start + Tailwind live-only dengan satu halaman dan tab GoPay/Shopee. Pengiriman OTP, discovery, refresh sesi, dan rekonsiliasi dapat mengirim request provider nyata; gunakan hanya akun merchant milik sendiri. Session, token, cookie, OTP challenge, provider instance, dan static QRIS harus tetap di modul server; client hanya menerima DTO tersunting serta SVG QR hasil render.
+`.example/development/web` adalah utility TanStack Start + Tailwind live-only dengan satu halaman dan tab GoPay/Shopee, ter-link ke root repo lewat `merchantid: file:../../..`. `.example/production` adalah konsol dua-route (kasir + riwayat) yang mengonsumsi paket `merchantid` terpublikasi dari npm. Pengiriman OTP, discovery, refresh sesi, dan rekonsiliasi dapat mengirim request provider nyata; gunakan hanya akun merchant milik sendiri. Login provider satu-satunya lewat OTP (GoPay: nomor→OTP; Shopee: nomor+password→OTP), tidak ada jalur paste cookie. Session, token, cookie, OTP challenge, provider instance, dan static QRIS harus tetap di modul server; client hanya menerima DTO tersunting serta SVG QR hasil render.
 
-State runtime schema v2 berada di `.example/web/data/` dan diabaikan Git. State atau payment schema lama dihapus saat migrasi agar tidak dianggap sebagai data live. `JsonPaymentStore` hanya untuk satu proses development, bukan store production. Rekonsiliasi sengaja manual agar hot reload tidak menggandakan polling interval.
+State runtime schema v2 berada di `.example/*/data/` dan diabaikan Git. State atau payment schema lama dihapus saat migrasi agar tidak dianggap sebagai data live. `JsonPaymentStore` hanya untuk satu proses development, bukan store production. Rekonsiliasi sengaja manual agar hot reload tidak menggandakan polling interval.
 
 Quality gate website dijalankan setelah root package dibuild dan dependency lokal terpasang:
 
 ```powershell
-Set-Location .example/web
+Set-Location .example/development/web
 npm run typecheck
 npm test
 npm run build
@@ -113,7 +113,7 @@ Set `MERCHANTID_DEBUG` untuk diagnostik umum. Debug tidak boleh mencetak token, 
 3. **Dependency mengarah ke dalam.** `src/core/` tidak boleh mengimpor provider, `api/`, `http/`, `payment/`, atau CLI.
 4. **Jangan melonggarkan lint.** Perbaiki kode.
 5. **Jangan pernah menulis token, cookie, OTP, challenge, QRIS asli, atau credential ke log, error, fixture, contoh, maupun diff.**
-6. **Jangan publish npm manual.** Lihat bagian 8.
+6. **Jangan publish npm manual.** Lihat bagian 9.
 7. **Jangan mengubah matching nominal, status sukses, expiry, atau scope tanpa test yang membuktikan perilaku diterima dan ditolak.**
 8. **Jangan mengarang endpoint atau refresh flow.** Provider privat harus berdasarkan bukti yang diamati.
 9. **Jangan bypass CAPTCHA.** Surface `CAPTCHA_REQUIRED` dan berhenti.
@@ -389,28 +389,34 @@ Aturan lengkap ada di [CONTRIBUTING.md](CONTRIBUTING.md). Ringkasan yang sering 
 
 ## 9. Rilis npm
 
-Publish otomatis lewat GitHub Actions dan npm Trusted Publishing (OIDC). Tidak ada token npm di repo atau secret.
+Publish otomatis lewat GitHub Actions dan npm Trusted Publishing (OIDC). Tidak ada token npm di repo atau secret. Trusted Publisher sudah terdaftar di npmjs.com untuk repo ini dan workflow `publish.yml`.
 
-Alur:
+Pemicu rilis adalah **tag versi `v*` yang di-push**, bukan event GitHub Release. Alur dua perintah dari branch default yang bersih dan hijau:
 
-1. Naikkan `version` hanya bila pengguna meminta release.
-2. Commit dan buat GitHub Release dengan tag sesuai.
-3. Workflow `release: created` menjalankan typecheck, lint, test, build, lalu `npm publish` tanpa token.
+```bash
+npm version patch   # atau minor / major — bump package.json, commit, buat tag vX.Y.Z
+git push --follow-tags
+```
+
+`.github/workflows/publish.yml` lalu: memverifikasi tag == `package.json`, typecheck → lint → format:check → test → build, `npm publish --provenance --access public`, dan **membuat GitHub Release dari dalam job itu** setelah publish sukses (dengan catatan otomatis).
 
 Aturan:
 
 - Jangan menjalankan `npm publish` lokal.
+- **Jangan membuat GitHub Release secara manual atau memicu publish dari event `release`.** Release yang dibuat `GITHUB_TOKEN` tidak memicu workflow lain (recursion guard), jadi jalur itu akan menghasilkan Release yang tak pernah publish. Publish dan Release sengaja disatukan dalam satu job yang dipicu tag.
+- Keberadaan GitHub Release = bukti versi sudah live di npm (Release dibuat hanya setelah publish sukses).
+- Versi yang terbit lewat CI punya provenance (`slsa.dev/provenance/v1`); publish manual tidak. `0.1.0` publish manual (tanpa provenance); sejak `0.1.1` lewat CI (ada provenance).
 - Workflow memakai Node 24 dan npm terbaru karena Trusted Publishing membutuhkan npm >= 11.5.1.
-- `permissions.id-token: write` wajib.
+- `permissions.id-token: write` (OIDC) dan `contents: write` (buat Release) wajib.
 - Jangan menambahkan `NODE_AUTH_TOKEN` atau `NPM_TOKEN`.
-- Jangan membuat commit, release, tag, menaikkan version, push, atau publish tanpa permintaan eksplisit.
-- Perubahan API atau matching yang breaking harus disebutkan beserta migrasinya.
+- Pilih bump sesuai SemVer: `patch` untuk perbaikan, `minor` untuk fitur kompatibel, `major` untuk breaking. Perubahan breaking harus disebutkan beserta migrasinya.
+- Jangan membuat commit, tag, menaikkan version, push, atau publish tanpa permintaan eksplisit.
 
 ---
 
 ## 10. Git
 
-- Branch utama `main`.
+- Branch utama `master`.
 - Commit prefix: `fix:`, `feat:`, `docs:`, `test:`, `refactor:`, `ci:`, `release:`.
 - Badan commit menjelaskan alasan.
 - Buat commit hanya bila diminta.
@@ -477,7 +483,8 @@ Jangan buka ulang tanpa bukti baru.
 | Interface di core, implementasi di luar                        | Dependency Rule dan test injection                                         |
 | CLI config versioned dan provider-keyed                        | Credential provider tidak bercampur; hanya schema MerchantId yang diterima |
 | Satu binary `merchantid`                                       | Satu entry CLI untuk seluruh provider                                      |
-| Web dev lab memakai `merchantid: file:../..`                   | Menguji build lokal sebelum publish tanpa bergantung registry npm          |
+| Web dev lab (`.example/development/web`) memakai `merchantid: file:../../..` | Menguji build lokal (link ke root repo) sebelum publish tanpa registry npm  |
+| Web produksi (`.example/production`) memakai `merchantid: 0.1.x` dari npm    | Menguji paket terpublikasi apa adanya, seperti konsumen sungguhan          |
 | Web dev lab selalu live dan state schema v2                    | Menguji request provider nyata; state/payment lama direset dengan aman     |
 | Credential web lab hanya di server dan `data/` gitignored      | Browser dan diff tidak boleh menerima material session atau QRIS mentah    |
 | Trusted Publishing OIDC tanpa token                            | Tidak ada npm token yang dapat bocor atau perlu dirotasi                   |
