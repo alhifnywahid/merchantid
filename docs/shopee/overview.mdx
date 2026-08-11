@@ -1,0 +1,69 @@
+---
+title: "Shopee Merchant"
+description: "Adapter ShopeeProvider: OTP fetch-only, cookie jar, merchant token, ganti merchant tanpa OTP baru, dan feed cursor ShopeePay."
+---
+
+`ShopeeProvider` adalah adapter untuk Shopee Merchant / ShopeePay. Ia memakai alur OTP fetch-only: tidak butuh browser, Playwright, Puppeteer, atau dependency cookie eksternal.
+
+## Karakteristik
+
+- **OTP fetch-only:** nomor telepon + password (bila akun dilindungi) menghasilkan OTP lewat WhatsApp, SMS, atau panggilan.
+- **Cookie jar murni:** state autentikasi disimpan sebagai cookie yang dapat dipersist dan dipulihkan.
+- **Multi-merchant:** satu akun dapat mengakses beberapa business merchant; ganti tanpa OTP baru.
+- **Multi-store:** satu merchant dapat memiliki beberapa store; QRIS terikat ke store.
+- **Feed cursor:** ShopeePay dipaginasi dengan `next_position`.
+- **QRIS manual:** dashboard API tidak menyediakan QRIS statis; berikan manual dan ikat ke store.
+
+## Konstruksi
+
+```ts
+import { ShopeeProvider } from "merchantid";
+
+const shopee = new ShopeeProvider({
+  session: sessionFromSecretStore,
+  staticQris: qrisFromSecretStore.payload,
+  staticQrisScope: qrisFromSecretStore.scope,
+  onSessionUpdated: async (session) => {
+    await saveSecret("shopee-session", session);
+  },
+});
+```
+
+Opsi utama config:
+
+| Opsi                | Kegunaan                                                                     |
+| ------------------- | ---------------------------------------------------------------------------- |
+| `merchantId`        | Business merchant id yang diinginkan bila akun mengakses beberapa            |
+| `storeId`           | Store id pemilik QRIS dan transaksi                                          |
+| `session`           | Pulihkan `ShopeeSession` yang diekspor sebelumnya                            |
+| `staticQris`        | Payload QRIS statis (diberikan manual)                                       |
+| `staticQrisScope`   | Owner QRIS (business merchant + store); wajib bila tak dapat diinfer         |
+| `deviceReport`      | Body device-risk report untuk setiap request OTP                            |
+| `onSessionUpdated`  | Callback persistence; token berotasi jadi wajib dipasang                    |
+| `store`             | `PaymentStore` kustom; default in-memory                                    |
+| `payment`           | Tuning polling/pembayaran                                                    |
+| `fetch` / `logger`  | Fetch dan logger kustom                                                      |
+
+<Warning>
+  Token Shopee berotasi setiap pembaruan, jadi `onSessionUpdated` wajib dipasang agar sesi tersimpan tidak menjadi basi. `ShopeeOtpChallenge`, `ShopeeOtpVerification`, dan `ShopeeSession` berisi cookie atau state autentikasi sensitif. Jangan mengirim objek tersebut ke browser, mencetaknya ke log, atau menyimpannya sebagai fixture. Lihat [Keamanan](/security/overview).
+</Warning>
+
+## Halaman Shopee
+
+<CardGroup cols={2}>
+  <Card title="Login OTP" icon="key" href="/shopee/login">
+    requestOtp, verifyOtp, completeLogin, loginWithOtp.
+  </Card>
+  <Card title="Merchant dan store" icon="store" href="/shopee/merchants-stores">
+    Discovery dan ganti merchant/store.
+  </Card>
+  <Card title="Pembayaran" icon="money-bill-transfer" href="/shopee/payments">
+    QRIS manual dan rekonsiliasi.
+  </Card>
+  <Card title="Sesi" icon="rotate" href="/shopee/sessions">
+    Perbarui sesi tanpa OTP baru.
+  </Card>
+  <Card title="Device risk" icon="shield-halved" href="/shopee/device-risk">
+    Device report dan pengiriman OTP.
+  </Card>
+</CardGroup>

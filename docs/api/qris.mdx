@@ -1,0 +1,96 @@
+---
+title: "QRIS, CRC, dan AmountAllocator"
+description: "Utilitas EMVCo/QRIS: parse, build, QRIS dinamis, validasi checksum, CRC-16, dan alokasi nominal unik."
+---
+
+Utilitas QRIS bekerja pada payload EMVCo TLV. Semua diekspos dari entry `merchantid`.
+
+## staticToDynamicQris
+
+```ts
+function staticToDynamicQris(staticPayload: string, amount: number): string
+```
+
+Mengubah QRIS statis menjadi dinamis dengan nominal tetap. Menanam tag `54` (nominal transaksi), membalik tag `01` dari statis (`11`) ke dinamis (`12`), lalu menghitung ulang CRC. `amount` harus integer positif (rupiah penuh). Checksum sumber diverifikasi lebih dulu; payload dengan checksum invalid ditolak (`QRIS_PARSE_ERROR`) agar QR yang rusak atau disunting tidak dipancarkan ulang sebagai QR valid yang mengalihkan pembayaran.
+
+```ts
+import { staticToDynamicQris } from "merchantid";
+
+const dynamic = staticToDynamicQris(staticQris, 25001);
+```
+
+## parseEmv
+
+```ts
+function parseEmv(payload: string): EmvTlvMap   // EmvTlvMap = Map<string, string>
+```
+
+Mem-parse payload EMVCo/QRIS menjadi map TLV datar (`<tag 2 digit><panjang 2 digit><nilai>`). Panjang dihitung dalam **byte UTF-8**, bukan karakter JavaScript, sehingga nama merchant non-ASCII terparse benar. Template bersarang dipertahankan sebagai nilai mentah. Payload malformed melempar `QRIS_PARSE_ERROR`.
+
+## buildEmv
+
+```ts
+function buildEmv(map: EmvTlvMap): string
+```
+
+Membangun ulang payload dari map TLV dan menambahkan CRC segar. Tag dipancarkan dalam urutan numerik menaik (kecuali tag CRC yang selalu terakhir, sesuai spesifikasi).
+
+## encodeTlv
+
+```ts
+function encodeTlv(tag: string, value: string): string
+```
+
+Menserialisasi satu elemen TLV dengan panjang dua digit ter-zero-pad, diukur dalam byte UTF-8. Nilai lebih dari 99 byte ditolak (`QRIS_PARSE_ERROR`) karena tidak bisa dinyatakan dengan panjang dua digit.
+
+## isValidQrisChecksum
+
+```ts
+function isValidQrisChecksum(payload: string): boolean
+```
+
+Memvalidasi CRC di akhir payload QRIS. Mengembalikan `false` untuk payload lebih pendek dari 8 karakter.
+
+## crc16ccitt
+
+```ts
+function crc16ccitt(input: string): string
+```
+
+CRC-16/CCITT-FALSE atas byte UTF-8 dari `input`, dikembalikan sebagai 4 digit heksadesimal uppercase. Ini algoritma checksum yang dipakai standar QRIS.
+
+## QRIS_TAGS
+
+Konstanta tag EMV yang dipakai library:
+
+```ts
+const QRIS_TAGS = {
+  payloadFormat: "00",
+  pointOfInitiation: "01",
+  transactionAmount: "54",
+  crc: "63",
+  poiStatic: "11",
+  poiDynamic: "12",
+} as const;
+```
+
+## AmountAllocator
+
+```ts
+class AmountAllocator {
+  constructor(maxOffset?: number);          // default 999
+  get max(): number;
+  allocate(baseAmount: number, takenAmounts: Iterable<number>): number;
+}
+```
+
+Mengalokasikan offset rupiah unik agar order konkuren dapat dibedakan murni dari nominal yang mendarat di akun. Keunikan ditegakkan pada **nominal hasil** (`baseAmount + offset`), bukan offset saja: dengan jendela offset 999, dua base amount bisa menghasilkan nominal akhir sama (`3500 + 1` dan `3499 + 2` sama-sama `3501`). `allocate` mengembalikan offset terkecil di `[1, maxOffset]` yang nominal hasilnya belum diklaim; bila semua slot terpakai, melempar `AMOUNT_POOL_EXHAUSTED`. Nilai `takenAmounts` di luar jangkauan base amount diabaikan, jadi Anda bisa memasukkan seluruh active set tanpa memfilter.
+
+```ts
+import { AmountAllocator } from "merchantid";
+
+const allocator = new AmountAllocator(999);
+const offset = allocator.allocate(3500, [3501, 3502]); // -> 3 (3503)
+```
+
+Konstruktor melempar `CONFIG_INVALID` bila `maxOffset` bukan integer positif. Lihat [Konsep inti](/guide/concepts) dan [Model pembayaran](/concepts/payments).

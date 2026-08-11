@@ -1,0 +1,90 @@
+---
+title: "Pembayaran GoPay"
+description: "Buat pembayaran, pantau settlement lewat event atau tick, dan pahami jebakan feed GoBiz."
+---
+
+Setelah login dan merchant terkonfigurasi, buat pembayaran dan pantau settlement. QRIS statis GoPay ditemukan otomatis dari profil outlet, jadi `qrString` biasanya langsung tersedia.
+
+## Membuat dan memantau
+
+```ts
+import { GopayProvider } from "merchantid";
+
+const gopay = new GopayProvider({
+  merchantId: "G000000001",
+  staticQris: "000201010211...",
+  session: sessionFromSecretStore,
+  onTokenRefreshed: async (session) => {
+    await saveSecret("gopay-session", session);
+  },
+});
+
+const payments = gopay.payments();
+payments.on("paid", (payment) => {
+  console.log("lunas", payment.reference, payment.uniqueAmount);
+});
+payments.on("expired", (payment) => {
+  console.log("kedaluwarsa", payment.reference);
+});
+payments.on("error", (error) => {
+  console.error("polling gagal", error);
+});
+payments.start();
+
+const payment = await gopay.createPayment({
+  amount: 10_000,
+  reference: "order-42",
+});
+
+console.log(payment.uniqueAmount); // 10001, pembeli harus membayar persis
+await displayQrLocally(payment.qrString); // jangan tulis payload QRIS mentah ke log
+```
+
+`gopay.payments()` mengembalikan `PaymentService` (dibuat lazily; membutuhkan sesi terautentikasi dan merchant id). `gopay.createPayment(input)` adalah pintasan untuk `gopay.payments().createPayment(input)`. Lihat [Model pembayaran](/concepts/payments) untuk siklus lengkap dan event.
+
+## Tick untuk runtime serverless
+
+Untuk Worker, Edge, Lambda, atau proses tanpa timer persisten, jangan gunakan `start()`. Panggil `tick()` dari scheduler platform:
+
+```ts
+const { paid, expired } = await gopay.payments().tick();
+```
+
+## Jebakan feed GoBiz
+
+### Satuan minor harus dibagi tepat 100
+
+GoBiz `merchant-analytics/v2` mengirim satuan minor ISO 4217. Rp 3.001 datang sebagai `gross_amount: 300100`. `TransactionClient` membagi tepat dengan 100. Nilai pecahan sengaja tidak dibulatkan agar gagal cocok dengan aman.
+
+<Warning>
+  Jangan membuat matcher menerima skala mentah dan skala rupiah sekaligus. Transaksi Rp 300.100 dapat keliru melunasi pesanan Rp 3.001.
+</Warning>
+
+### Page size maksimum 100
+
+Feed GoBiz menolak `size > 100` dengan HTTP 422. MerchantId meng-clamp page size dan memindai sampai 10 halaman per tick. Jendela dimulai dari pembayaran aktif tertua, dikurangi `clockSkewMs`, dengan plafon bergulir 24 jam.
+
+Jika outlet lebih sibuk dari kapasitas itu, pendekkan masa berlaku pembayaran. Jangan menaikkan page size melewati limit API.
+
+### Status dan timestamp tidak dikenal sengaja fail-open
+
+Matcher menolak status gagal yang dikenal, tetapi menerima status kosong/tidak dikenal dan timestamp yang tidak dapat diparse. Feed privat dapat berubah label. Mengubah perilaku ini menjadi fail-closed dapat membuat pembayaran sah tidak pernah terdeteksi. Lihat [Konsep inti](/guide/concepts).
+
+### Settlement sebelum expiry
+
+Rekonsiliasi dilakukan sebelum penandaan kedaluwarsa. Pembayaran baru menjadi expired setelah `expiresAt + clockSkewMs`, yaitu saat matcher juga berhenti menerima transaksi. Ini menahan jeda indexing feed agar uang yang dibayar tepat waktu tidak kehilangan pesanannya.
+
+## Akses feed langsung
+
+Untuk kebutuhan lanjutan, feed dapat dibaca langsung lewat `GopayTransactionClient`, tetapi umumnya `PaymentService` sudah menangani pagination dan matching untuk Anda. Lihat [Referensi API GopayProvider](/api/gopay-provider).
+
+## Referensi
+
+<CardGroup cols={2}>
+  <Card title="Model pembayaran" icon="money-bill-transfer" href="/concepts/payments">
+    Siklus, event, dan tuning.
+  </Card>
+  <Card title="Referensi PaymentService" icon="code" href="/api/payment-service">
+    Seluruh method dan opsi.
+  </Card>
+</CardGroup>

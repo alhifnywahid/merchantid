@@ -1,0 +1,68 @@
+---
+title: "Sesi Shopee"
+description: "Memperbarui sesi tanpa OTP baru, sinyal liveness yang benar, dan rotasi token."
+---
+
+Sesi merchant Shopee dapat dicetak ulang tanpa OTP baru selama sesi akun masih hidup. Halaman ini menjelaskan cara memperbarui sesi dengan benar dan jebakan liveness yang mudah salah.
+
+## Memperbarui sesi
+
+```ts
+try {
+  await shopee.refreshSession();
+} catch (error) {
+  // AUTH_REQUIRED: sesi akun sudah mati, hanya login OTP baru yang memulihkan.
+}
+```
+
+`refreshSession` menanyakan Shopee langsung apakah sesi akun masih hidup (`login_status`), lalu mencetak ulang token merchant aktif lewat pertukaran SSO yang sama dengan login segar. Bila sesi akun sudah mati, ia melempar `AuthError` dengan code `AUTH_REQUIRED` - tidak ada retry diam-diam yang dapat memulihkannya.
+
+## Sinyal liveness yang benar
+
+<Warning>
+  `exp` pada cookie dashboard Shopee berumur ~1000 hari dan **tidak** mencerminkan sesi server, jadi jangan memakainya untuk menilai sesi masih hidup. Getter `authenticated` hanya pemeriksaan struktural (cookie ada dan cocok dengan `accountId`), bukan bukti sesi server masih valid.
+</Warning>
+
+Satu-satunya sinyal liveness yang jujur adalah `login_status`: selama ia menjawab `error:0`, token merchant dapat dicetak ulang; setelah menjawab "not login", akun harus login OTP baru. `refreshSession` sudah memeriksa ini untuk Anda.
+
+## Rotasi token
+
+Token berotasi setiap pembaruan, jadi `onSessionUpdated` wajib dipasang agar sesi tersimpan tidak menjadi basi:
+
+```ts
+const shopee = new ShopeeProvider({
+  session: sessionFromSecretStore,
+  onSessionUpdated: async (session) => {
+    await saveSecret("shopee-session", session); // dipanggil setiap token berotasi
+  },
+});
+```
+
+Sesi lama tanpa materi SSO (`switchCredential`) akan menolak dengan `AUTH_REQUIRED`. Sesi seperti itu berasal dari sebelum dukungan renewal atau dari impor cookie mentah, dan hanya login OTP baru yang memulihkannya.
+
+## Ekspor sesi
+
+```ts
+const session = shopee.exportSession();
+await saveSecret("shopee-session", session);
+```
+
+`exportSession` mengembalikan `ShopeeSession` dengan snapshot cookie terkini dan `expiresAt` dari credential. Perlakukan seluruh objek sebagai kredensial: memuat cookie yang dapat memberi akses merchant. `ShopeeSession.switchCredential` adalah materi akun-sesi yang dapat mencetak token merchant untuk merchant mana pun di akun tanpa OTP kedua - sama sensitifnya dengan cookie.
+
+## Getter authenticated
+
+```ts
+if (shopee.authenticated) {
+  // Ada cookie terstruktur yang cocok dengan accountId sesi.
+}
+```
+
+`authenticated` memeriksa apakah credential cookie ada, belum kedaluwarsa secara struktural, dan `accountId`-nya cocok dengan sesi. Ini pemeriksaan murah tanpa jaringan; untuk kepastian sesi server, panggil operasi nyata atau `refreshSession`.
+
+## Transisi yang aman
+
+Semua auth, discovery store, dan pergantian store diserialkan: composition pembayaran dinonaktifkan dan antrean write/polling dikuras sebelum cookie/session di-snapshot; target baru diaktifkan hanya setelah `onSessionUpdated` berhasil. Callback `onSessionUpdated` tidak boleh memulai transisi provider reentrant (auth/store) - ia harus gagal cepat, bukan deadlock. Lihat [Merchant dan store Shopee](/shopee/merchants-stores).
+
+## Referensi
+
+Lihat [Referensi API ShopeeProvider](/api/shopee-provider) untuk `refreshSession`, `exportSession`, dan getter `authenticated`.

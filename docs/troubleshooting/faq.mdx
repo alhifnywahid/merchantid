@@ -1,0 +1,54 @@
+---
+title: "FAQ"
+description: "Pertanyaan yang sering diajukan tentang MerchantId."
+---
+
+<AccordionGroup>
+  <Accordion title="Apakah ini resmi dari Gojek atau Shopee?">
+    Bukan. MerchantId adalah klien tidak resmi yang memakai endpoint privat tak berdokumentasi. Tidak berafiliasi dengan, didukung oleh, atau disponsori oleh Gojek, GoTo, Shopee, maupun Sea Group. Gunakan hanya dengan akun merchant milik Anda sendiri. Lihat [Keamanan](/security/overview#penafian).
+  </Accordion>
+
+  <Accordion title="Kenapa memakai nominal unik alih-alih order reference?">
+    API privat provider tidak membawa order reference milik aplikasi Anda. Feed transaksi hanya menampilkan nominal, waktu, dan status. MerchantId menjadikan nominal akhir sebagai pembeda: tiap pesanan mendapat offset rupiah unik, lalu QRIS dinamis dengan nominal itu ditanam ke tag EMV. Lihat [Konsep inti](/guide/concepts).
+  </Accordion>
+
+  <Accordion title="Apakah ada dependency runtime?">
+    Tidak. MerchantId memakai `fetch` global dan primitive Web API tanpa dependency runtime. Ia tersedia sebagai ESM dan CommonJS dengan deklarasi tipe. Lihat [Instalasi](/guide/installation).
+  </Accordion>
+
+  <Accordion title="Bisakah dijalankan di Cloudflare Workers atau Vercel Edge?">
+    Diharapkan bisa, tetapi belum diverifikasi di CI (yang menjalankan Node 18 dan 24). Core dan API publik tidak mengimpor Node builtin. Untuk runtime tanpa timer persisten, jangan gunakan `start()`; panggil `tick()` dari scheduler platform (Cron/Alarm). Lihat [Dukungan runtime](/troubleshooting/overview#dukungan-runtime).
+  </Accordion>
+
+  <Accordion title="Kenapa OTP Shopee tidak tiba padahal sukses?">
+    Dua penyebab umum: password tidak diberikan pada akun berpassword, atau device report yang degraded membuat Shopee menahan pengiriman. Berikan `password` dan `deviceReport` dari browser Anda sendiri. Lihat [Device risk](/shopee/device-risk).
+  </Accordion>
+
+  <Accordion title="Apakah library membypass CAPTCHA?">
+    Tidak. Bila provider meminta CAPTCHA, library melempar `CaptchaRequiredError` dan berhenti. Selesaikan verifikasi lewat alur resmi provider.
+  </Accordion>
+
+  <Accordion title="Apa bedanya start() dan tick()?">
+    `start()` memulai timer background untuk polling. `tick()` menjalankan satu putaran rekonsiliasi secara manual. Untuk runtime serverless tanpa timer persisten, panggil `tick()` dari scheduler. Lihat [Model pembayaran](/concepts/payments).
+  </Accordion>
+
+  <Accordion title="Kenapa exp cookie Shopee tidak bisa dipakai menilai sesi?">
+    `exp` cookie dashboard Shopee berumur ~1000 hari dan tidak mencerminkan sesi server. Satu-satunya sinyal liveness jujur adalah `login_status`, yang diperiksa `refreshSession`. Getter `authenticated` hanya pemeriksaan struktural. Lihat [Sesi Shopee](/shopee/sessions).
+  </Accordion>
+
+  <Accordion title="Bisakah satu akun memakai beberapa merchant atau store?">
+    Ya. GoPay: satu akun dapat mengakses beberapa merchant, tiap merchant beberapa outlet. Shopee: satu akun beberapa business merchant (`selectMerchant` tanpa OTP baru), tiap merchant beberapa store (`selectStore`). Lihat [Merchant GoPay](/gopay/merchants) dan [Merchant/store Shopee](/shopee/merchants-stores).
+  </Accordion>
+
+  <Accordion title="Apakah aman memakai satu PaymentStore untuk semua provider?">
+    Ya, karena tiap pembayaran membawa `PaymentScope` (provider/account/merchant-store) dan store menghormati scope pada `listActive`. Untuk multi-instance, store production harus menegakkan keunikan nominal aktif per scope secara atomik. Lihat [PaymentStore](/concepts/payment-store).
+  </Accordion>
+
+  <Accordion title="Bagaimana cara mempublikasikan versi baru?">
+    Rilis otomatis lewat GitHub Actions dan npm Trusted Publishing (OIDC), dipicu oleh tag versi `v*` yang di-push. Publish manual tidak dilakukan. Detail ada di repo (AGENTS.md).
+  </Accordion>
+</AccordionGroup>
+
+## Masih ada pertanyaan?
+
+Buka issue di [GitHub](https://github.com/alhifnywahid/merchantid/issues). Jangan menyalin kredensial atau PII ke issue.

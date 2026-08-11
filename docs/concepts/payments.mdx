@@ -1,0 +1,123 @@
+---
+title: "Model pembayaran"
+description: "Siklus pembayaran bersama: alokasi nominal unik, QRIS dinamis, polling feed, dan rekonsiliasi."
+---
+
+Semua adapter memakai alur inti yang sama, dikendalikan `PaymentService`. Halaman ini menjelaskan siklus lengkap dari `createPayment` sampai `paid`/`expired`.
+
+## Alur inti
+
+<Steps>
+  <Step title="Alokasi nominal unik">
+    `AmountAllocator` memilih nominal akhir unik dalam scope provider/account/merchant-store. Slot terkecil dipilih lebih dulu.
+  </Step>
+  <Step title="QRIS dinamis">
+    `staticToDynamicQris` menambahkan tag nominal EMV `54`, mengubah QRIS menjadi dinamis, dan menghitung ulang CRC - hanya bila static QRIS terkonfigurasi.
+  </Step>
+  <Step title="Ambil feed">
+    Adapter provider mengambil serta menormalisasi feed menjadi rupiah utuh.
+  </Step>
+  <Step title="Cocokkan">
+    `PaymentService` mencocokkan nominal, status, waktu, dan scope. Satu transaksi hanya boleh melunasi satu pembayaran.
+  </Step>
+</Steps>
+
+## Membuat pembayaran
+
+```ts
+const payment = await provider.createPayment({
+  amount: 10_000,
+  reference: "order-42",
+  expiresInMs: 5 * 60 * 1000, // opsional, default 5 menit
+  metadata: { cashier: "A" }, // opsional
+});
+```
+
+`createPayment` mengembalikan `Payment` dengan `uniqueAmount` (nominal yang harus dibayar pembeli) dan `qrString` (payload QRIS dinamis, bila static QRIS terkonfigurasi). `amount` wajib bilangan bulat positif dalam rupiah utuh.
+
+Panggilan konkuren diserialkan: membaca himpunan aktif dan menulis pembayaran baru adalah dua await, dan tanpa serialisasi setiap pemanggil dalam burst melihat state "sebelum" yang sama lalu memilih offset yang sama.
+
+## Objek Payment
+
+```ts
+interface Payment {
+  id: string;
+  scope?: PaymentScope;
+  baseAmount: number;    // nominal yang diminta merchant
+  uniqueOffset: number;  // offset unik yang ditambahkan
+  uniqueAmount: number;  // baseAmount + uniqueOffset
+  status: "pending" | "paid" | "expired" | "cancelled";
+  createdAt: number;
+  expiresAt: number;
+  reference?: string;
+  qrString?: string;
+  transaction?: MerchantTransaction; // terisi setelah paid
+  metadata?: Record<string, unknown>;
+}
+```
+
+## Polling background vs tick manual
+
+`start()` memulai timer background dengan interval `pollIntervalMs` (default 3 detik). `stop()` menghentikannya. Timer tidak menahan event loop tetap hidup (`unref`).
+
+Untuk runtime tanpa timer persisten (Worker, Edge, Lambda), panggil `tick()` dari scheduler platform:
+
+```ts
+const { paid, expired } = await provider.payments().tick();
+```
+
+Satu `tick()` menjalankan satu putaran: menarik feed, menyelesaikan yang cocok, lalu menandai kedaluwarsa yang lewat masa berlaku. Bila sebuah tick sedang berjalan, panggilan tick lain langsung kembali kosong.
+
+## Event
+
+`PaymentService` adalah event emitter dengan tiga event bertipe:
+
+```ts
+const payments = provider.payments();
+payments.on("paid", (payment) => { /* Payment */ });
+payments.on("expired", (payment) => { /* Payment */ });
+payments.on("error", (error) => { /* Error */ });
+```
+
+Listener yang melempar diisolasi: exception-nya disurface-kan ke channel `error`, tidak membatalkan accounting tick yang sudah tersimpan ke store.
+
+## Membatalkan dan membaca
+
+```ts
+const cancelled = await payments.cancelPayment(payment.id);
+const current = await payments.getPayment(payment.id);
+```
+
+`cancelPayment` hanya membatalkan pembayaran yang masih `pending`. Bila pembayaran sudah terminal (paid/expired/cancelled), state tersimpan dikembalikan apa adanya sehingga balapan dengan poller tidak dapat membatalkan pembayaran yang sudah lunas.
+
+## Aturan pencocokan
+
+Sebuah transaksi melunasi pembayaran bila:
+
+- **Nominal cocok:** `grossAmount` atau `realGrossAmount` sama dengan `uniqueAmount`.
+- **Status bukan gagal yang dikenal:** status sukses (`settlement`, `capture`, `success`, `paid`, `settled`, `completed`) diterima; status kosong atau tidak dikenal juga diterima (fail-open); hanya status gagal yang dikenal ditolak.
+- **Waktu di dalam jendela:** `createdAt - clockSkewMs` sampai `expiresAt + clockSkewMs`. Timestamp yang tidak dapat diparse jatuh ke nominal dan status saja.
+
+Nominal adalah pembeda utama; keunikan nominal antar pembayaran aktif dijamin allocator, sehingga kecocokan nominal eksak dalam jendela mengidentifikasi pembayar tanpa ambiguitas. Lihat [Konsep inti](/guide/concepts).
+
+## Grace window dan expiry
+
+Rekonsiliasi berjalan sebelum penandaan kedaluwarsa. Pembayaran baru menjadi expired setelah `expiresAt + clockSkewMs`, yaitu saat matcher juga berhenti menerima transaksi. Ini menahan jeda indexing feed agar uang yang dibayar tepat waktu tidak kehilangan pesanannya.
+
+Default masa berlaku adalah 5 menit. Feed dapat terlambat mengindeks, terutama bila scheduler berjalan jarang. Sesuaikan `payment.defaultExpiryMs` agar setidaknya mencakup interval scheduler dan keterlambatan feed yang realistis.
+
+## Opsi tuning
+
+Diteruskan lewat `payment` pada config provider:
+
+| Opsi                   | Default   | Kegunaan                                              |
+| ---------------------- | --------- | ----------------------------------------------------- |
+| `pollIntervalMs`       | `3000`    | Interval polling background                            |
+| `defaultExpiryMs`      | `300000`  | Masa berlaku default pembayaran                        |
+| `clockSkewMs`          | `60000`   | Toleransi skew jam untuk jendela dan karantina         |
+| `transactionPageSize`  | `100`     | Ukuran halaman feed, di-clamp ke limit provider (100)  |
+| `maxUniqueOffset`      | `999`     | Jendela offset nominal unik                            |
+
+## Referensi
+
+Lihat [Referensi API PaymentService](/api/payment-service) untuk seluruh opsi, method, dan event.

@@ -1,0 +1,74 @@
+---
+title: "Penanganan error"
+description: "MerchantIdError sebagai base error publik, subclass bertipe, dan kode error."
+---
+
+`MerchantIdError` adalah base error publik untuk seluruh kegagalan bertipe yang disurface-kan library. Setiap error publik adalah turunannya, sehingga penanganan error tetap terprediksi.
+
+## Menangkap error
+
+```ts
+import { MerchantIdError, HttpError } from "merchantid";
+
+try {
+  await provider.createPayment({ amount: 10_000 });
+} catch (error) {
+  if (error instanceof HttpError) {
+    console.error("HTTP", error.status);
+  } else if (error instanceof MerchantIdError) {
+    console.error(error.code, error.message);
+  } else {
+    throw error;
+  }
+}
+```
+
+Setiap `MerchantIdError` membawa `code` (bertipe `MerchantIdErrorCode`), `message`, `cause` opsional, dan `details` opsional.
+
+## Kode error
+
+| Code                    | Penyebab umum                                                 |
+| ----------------------- | ------------------------------------------------------------- |
+| `CONFIG_INVALID`        | Scope, merchant/store, QRIS, atau nominal tidak valid         |
+| `AUTH_REQUIRED`         | Operasi membutuhkan sesi yang belum tersedia                  |
+| `AUTH_FAILED`           | OTP ditolak, token/cookie kedaluwarsa, atau sesi dicabut      |
+| `CAPTCHA_REQUIRED`      | Shopee meminta verifikasi CAPTCHA resmi                       |
+| `HTTP_ERROR`            | Response HTTP non-2xx atau timeout                            |
+| `API_ERROR`             | Provider mengembalikan error aplikasi atau cursor tidak valid |
+| `AMOUNT_POOL_EXHAUSTED` | Semua offset pada scope sedang terpakai                       |
+| `QRIS_PARSE_ERROR`      | Payload QRIS atau nominal EMV tidak valid                     |
+
+## Hierarki subclass
+
+| Kelas                 | Code                             | Catatan                                                            |
+| --------------------- | -------------------------------- | ----------------------------------------------------------------- |
+| `MerchantIdError`     | semua                            | Base publik; bawa `code`, `message`, `cause?`, `details?`         |
+| `ConfigError`         | `CONFIG_INVALID`                 | Input atau state tidak valid                                       |
+| `AuthError`           | `AUTH_REQUIRED` \| `AUTH_FAILED` | Sesi hilang atau ditolak                                           |
+| `CaptchaRequiredError`| `CAPTCHA_REQUIRED`               | Verifikasi CAPTCHA dibutuhkan; library tidak membypass            |
+| `HttpError`           | `HTTP_ERROR`                     | Bawa `status` dan `body` (non-enumerable)                          |
+| `ApiError`            | `API_ERROR`                      | Bawa `apiCode` opsional dari envelope provider                     |
+
+## HttpError dan kebocoran
+
+`HttpError` menyimpan `body` respons untuk inspeksi, tetapi **non-enumerable** secara sengaja. `util.inspect` - yang dipakai `console.error(err)` - hanya mencetak properti enumerable, jadi body enumerable akan menuang seluruh respons provider (termasuk kredensial) ke log begitu ada yang mencatat error. Membaca `error.body` tetap berfungsi seperti biasa.
+
+```ts
+try {
+  await provider.payments().tick();
+} catch (error) {
+  if (error instanceof HttpError) {
+    console.error("status", error.status);
+    // error.body tersedia bila perlu, tetapi tidak tercetak oleh console.error(error)
+  }
+}
+```
+
+## Perbedaan AUTH_REQUIRED vs AUTH_FAILED
+
+- `AUTH_REQUIRED`: operasi butuh sesi yang belum ada, atau sesi akun sudah mati sehingga hanya login OTP baru yang memulihkan (Shopee).
+- `AUTH_FAILED`: OTP ditolak, refresh token kedaluwarsa/invalid, atau sesi dicabut. Untuk GoPay, surface ini sebagai kebutuhan login ulang, bukan sebagai status belum dibayar. Lihat [Sesi Shopee](/shopee/sessions) dan [Login GoPay](/gopay/login).
+
+## Referensi
+
+Lihat [Referensi API error](/api/errors) untuk tanda tangan konstruktor tiap kelas.

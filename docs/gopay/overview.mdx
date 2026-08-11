@@ -1,0 +1,69 @@
+---
+title: "GoPay Merchant"
+description: "Adapter GopayProvider: OTP GoID, refresh token otomatis, discovery merchant/outlet, dan feed transaksi GoBiz."
+---
+
+`GopayProvider` adalah adapter untuk GoPay Merchant / GoBiz. Ia menangani OTP GoID, refresh token otomatis pada `401`, discovery merchant dan outlet, resolusi QRIS statis dari profil outlet, serta feed transaksi offset-based.
+
+## Karakteristik
+
+- **OTP GoID dua langkah:** request OTP, lalu verifikasi untuk mendapatkan access/refresh token.
+- **Refresh otomatis:** token disegarkan sebelum kedaluwarsa (buffer 5 menit) dan pada `401` request diretry sekali dengan token baru.
+- **QRIS otomatis:** payload QRIS statis ditemukan dari `pops[].gopay.aspi_qr_string` profil merchant. Anda dapat juga menyediakannya manual.
+- **Feed offset:** `merchant-analytics/v2` dipaginasi berbasis offset dengan page size di-clamp ke 100.
+
+## Konstruksi
+
+```ts
+import { GopayProvider } from "merchantid";
+
+const gopay = new GopayProvider({
+  merchantId: "G000000001",
+  session: sessionFromSecretStore,
+  onTokenRefreshed: async (session) => {
+    await saveSecret("gopay-session", session);
+  },
+});
+```
+
+Opsi utama config:
+
+| Opsi                     | Kegunaan                                                              |
+| ------------------------ | -------------------------------------------------------------------- |
+| `merchantId`             | Merchant id (mis. `"G000000001"`); wajib untuk polling transaksi     |
+| `session`                | Pulihkan sesi sebelumnya alih-alih login lagi                        |
+| `staticQris`             | Payload QRIS statis; bila kosong, ditemukan dari profil outlet       |
+| `onTokenRefreshed`       | Callback persistence setelah refresh token otomatis                  |
+| `store`                  | `PaymentStore` kustom; default in-memory                             |
+| `payment`                | Tuning polling/pembayaran (lihat [Model pembayaran](/concepts/payments)) |
+| `fetch`                  | Implementasi fetch kustom untuk runtime tanpa `fetch` global          |
+| `logger`                 | `Logger` kustom                                                      |
+
+Lihat [Referensi API GopayProvider](/api/gopay-provider) untuk seluruh opsi.
+
+## Token dan sesi
+
+`GopayProvider` mengelola siklus token secara transparan lewat `TokenManager`:
+
+- Token disegarkan proaktif sebelum kedaluwarsa (buffer default 5 menit).
+- Request yang menerima `401` diretry sekali setelah force-refresh.
+- Refresh token yang berotasi diadopsi dan dipersist lewat `onTokenRefreshed` sebelum menjadi sesi in-memory aktif.
+- Device id stabil dipertahankan lintas sesi untuk header `x-uniqueid` yang konsisten.
+
+<Warning>
+  Access token GoPay berbentuk JWE yang klaim `exp`-nya tidak dapat dibaca, dan respons refresh tidak selalu menyediakan `expires_in`. `TokenManager` memakai fallback 30 menit sebagai perkiraan konservatif. Refresh token wajib dikirim tersarang di objek `data`; bentuk flat ditolak `401` generik. Lihat [Login GoPay](/gopay/login#refresh-token).
+</Warning>
+
+## Halaman GoPay
+
+<CardGroup cols={3}>
+  <Card title="Login" icon="key" href="/gopay/login">
+    OTP GoID dan refresh token.
+  </Card>
+  <Card title="Merchant" icon="store" href="/gopay/merchants">
+    Discovery merchant dan outlet.
+  </Card>
+  <Card title="Pembayaran" icon="money-bill-transfer" href="/gopay/payments">
+    Buat dan pantau pembayaran.
+  </Card>
+</CardGroup>

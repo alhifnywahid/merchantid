@@ -1,0 +1,112 @@
+---
+title: "ShopeeProvider"
+description: "Provider ShopeePay Merchant: OTP fetch-only, pemilihan merchant/store, renewal sesi, dan pembayaran."
+---
+
+`ShopeeProvider` mengimplementasikan `MerchantProvider<ShopeeSession>`. Otentikasi sepenuhnya fetch-only (tanpa browser), dengan cookie jar internal, laporan device-risk, pemilihan merchant/store, dan renewal sesi tanpa OTP baru.
+
+```ts
+import { ShopeeProvider } from "merchantid";
+
+const shopee = new ShopeeProvider({
+  deviceReport,
+  onSessionUpdated: (session) => save(session),
+});
+```
+
+## ShopeeProviderConfig
+
+| Opsi                | Tipe                                   | Default                | Kegunaan                                                            |
+| ------------------- | -------------------------------------- | ---------------------- | ------------------------------------------------------------------ |
+| `merchantId`        | `string`                               | -                      | Business merchant id pilihan bila akun punya beberapa              |
+| `storeId`           | `string`                               | -                      | Store/outlet pemilik pembayaran                                    |
+| `session`           | `ShopeeSession`                        | -                      | Restore sesi Shopee yang diekspor                                  |
+| `staticQris`        | `string`                               | -                      | QRIS statis (tidak ada di dashboard API; tempel manual)            |
+| `staticQrisScope`   | `ShopeeStaticQrisScope`                | infer dari sesi        | Pemilik QRIS; wajib bila tak bisa diinfer                          |
+| `store`             | `PaymentStore`                         | `InMemoryPaymentStore` | Backend pembayaran                                                 |
+| `payment`          | lihat di bawah                          | -                      | Penyetelan polling dan pembayaran                                  |
+| `language`          | `string`                               | -                      | Locale bahasa                                                      |
+| `timezone`          | `string`                               | -                      | Zona waktu                                                         |
+| `requestTimeoutMs`  | `number`                               | `20000`                | Timeout request                                                    |
+| `fetch`             | `FetchLike`                            | `globalThis.fetch`     | Implementasi fetch kustom                                          |
+| `deviceReport`      | `string`                               | -                      | Body device-risk untuk tiap OTP; tanpa ini OTP ditahan diam-diam   |
+| `onSessionUpdated`  | `(session) => void \| Promise<void>`   | -                      | Persist penggantian sesi (token berotasi)                          |
+
+Objek `payment` menerima `pollIntervalMs`, `defaultExpiryMs`, `clockSkewMs`, `transactionPageSize`, dan `maxUniqueOffset`.
+
+<Warning>
+  Konstruksi melempar `ConfigError` bila `merchantId` yang dikonfigurasi tidak cocok dengan sesi yang di-restore, bila `staticQrisScope` diberikan tanpa `staticQris`, atau bila QRIS/scope tidak valid.
+</Warning>
+
+## Login
+
+```ts
+requestOtp(phoneNumber: string, options?: ShopeeOtpRequestOptions): Promise<ShopeeOtpChallenge>
+verifyOtp(input: ShopeeVerifyOtpInput): Promise<ShopeeOtpVerification>
+completeLogin(input: ShopeeCompleteLoginInput): Promise<ShopeeSession>
+loginWithOtp(input: ShopeeLoginWithOtpInput): Promise<ShopeeLoginOutcome>
+```
+
+Login inti tiga langkah: `requestOtp` -> `verifyOtp` -> `completeLogin`. `deviceReport` default diambil dari config bila tidak dilewatkan di options. `options` OTP mendukung channel (1=SMS, 2=telepon, 3=WhatsApp) dan `password`.
+
+`loginWithOtp` menggabungkan verify + complete. Bila akun punya lebih dari satu merchant usable dan `merchantId` tidak diberikan, ia **tidak melempar**, melainkan mengembalikan `ShopeeLoginOutcome`:
+
+```ts
+type ShopeeLoginOutcome =
+  | { status: "complete"; session: ShopeeSession }
+  | { status: "merchant-selection-required"; verification: ShopeeOtpVerification; merchants: ShopeeMerchantSummary[] };
+```
+
+Simpan `verification`, tampilkan `merchants`, lalu selesaikan dengan `completeLogin({ verification, merchantId })` - tanpa OTP kedua. Lihat [Login Shopee](/shopee/login).
+
+## Merchant dan store
+
+| Anggota                             | Kembalian                          | Kegunaan                                                    |
+| ----------------------------------- | ---------------------------------- | ---------------------------------------------------------- |
+| `get merchants`                     | `ShopeeMerchantSummary[]`          | Semua business merchant yang bisa dituju sesi              |
+| `get activeMerchant`                | `ShopeeMerchantSummary \| undefined` | Merchant aktif saat terautentikasi                       |
+| `selectMerchant(merchantId)`        | `Promise<ShopeeSession>`           | Ganti merchant aktif (ulang SSO exchange, tanpa OTP)       |
+| `listStores()`                      | `Promise<ShopeeStore[]>`           | Daftar store merchant aktif                                |
+| `selectStore(storeId)`              | `Promise<ShopeeSession>`           | Pilih store aktif                                          |
+| `getMerchantProfile()`              | `Promise<ShopeeMerchantProfile>`   | Profil merchant aktif                                      |
+
+`selectMerchant` memutar ulang login token exchange (`login_toc` -> `/account/login/tob/auth`) memakai `switchCredential`; `SwitchMerchant` langsung ditolak API (200020) di luar browser. Berpindah merchant/store diblokir bila store aktif masih punya pembayaran aktif. Lihat [Merchant dan store Shopee](/shopee/merchants-stores).
+
+## Sesi
+
+| Metode                              | Kembalian                          | Kegunaan                                                    |
+| ----------------------------------- | ---------------------------------- | ---------------------------------------------------------- |
+| `get authenticated`                 | `boolean`                          | Pemeriksaan struktural cookie (bukan liveness jaringan)    |
+| `refreshSession()`                  | `Promise<ShopeeSession>`           | Perpanjang token via `login_status` tanpa OTP baru         |
+| `exportSession()`                   | `ShopeeSession`                    | Ekspor sesi untuk persist                                  |
+
+`refreshSession` bertanya langsung ke Shopee (`login_status`); selama account session hidup, ia me-remint token merchant aktif via SSO exchange. Bila mati, melempar `AUTH_REQUIRED` - hanya OTP baru yang memulihkan. Sesi tanpa `switchCredential` (dibuat sebelum dukungan renewal) menolak `refreshSession` dan `selectMerchant`. `exp` cookie ~1000 hari bukan sinyal liveness. Lihat [Sesi Shopee](/shopee/sessions).
+
+## QRIS
+
+| Anggota                             | Kembalian                          | Kegunaan                                                    |
+| ----------------------------------- | ---------------------------------- | ---------------------------------------------------------- |
+| `get staticQris`                    | `string \| undefined`              | QRIS hanya bila owner cocok dengan store aktif             |
+| `get staticQrisScope`               | `ShopeeStaticQrisScope \| undefined` | Pemilik QRIS terekam                                     |
+| `setStaticQris(qris)`               | `void`                             | Ikat QRIS ke store aktif (validasi checksum + payload)     |
+
+QRIS Shopee terikat ke pemilik (`{ merchantId, storeId }`); store lain tidak mewarisinya. `setStaticQris(undefined)` melepas ikatan. Lihat [Pembayaran Shopee](/shopee/payments).
+
+## Pembayaran
+
+| Metode                          | Kembalian                   | Kegunaan                                        |
+| ------------------------------- | --------------------------- | ----------------------------------------------- |
+| `payments()`                    | `PaymentService`            | Service pembayaran per scope (wajib store terpilih) |
+| `createPayment(input)`          | `Promise<Payment>`          | Shortcut `payments().createPayment(input)`      |
+| `getTransactionFeed()`          | `ShopeeTransactionFeed`     | Feed transaksi store aktif                      |
+| `getPaymentScope()`             | `PaymentScope \| undefined` | `{ provider, accountId: merchant.id, merchantId: storeId }` |
+
+`PaymentService` di-cache per scope pembayaran (satu per kombinasi merchant/store). Berpindah store/merchant menonaktifkan komposisi lama dan mengaktifkan yang sesuai store baru. Lihat [Pembayaran Shopee](/shopee/payments) dan [PaymentService](/api/payment-service).
+
+## Client aliased
+
+Shopee di-reexport bersama: `ShopeeAuthClient`, `ShopeeMerchantClient`, `ShopeeTransactionFeed`, `ShopeeCookieJar`, `ShopeeHttpClient`, `parseShopeeAmount`, `md5Hex`/`sha256Hex`/`hashShopeePassword`, dan konstanta `SHOPEE_PROVIDER_ID`/`SHOPEE_DEVICE_RISK_BLOB`.
+
+<Warning>
+  `SHOPEE_DEVICE_RISK_BLOB` adalah laporan device-risk tangkapan satu mesin. Memakainya melaporkan identitas device yang bukan milik Anda ke sistem anti-fraud Shopee, dengan risiko pelanggaran ToS dan penangguhan akun. Tangkap laporan dari browser Anda sendiri. Lihat [Device risk](/shopee/device-risk).
+</Warning>

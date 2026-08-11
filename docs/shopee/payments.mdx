@@ -1,0 +1,102 @@
+---
+title: "Pembayaran Shopee"
+description: "Binding QRIS statis manual per store, membuat pembayaran, dan jebakan feed ShopeePay."
+---
+
+Dashboard API yang diamati tidak menyediakan payload QRIS statis Shopee, jadi Anda mengikatnya manual ke scope aktif. Setelah sesi, store, dan QRIS tersedia, pembayaran bekerja seperti provider lain.
+
+## Binding QRIS statis
+
+Setelah merchant dan store dipilih, ikat payload QRIS ke scope aktif:
+
+```ts
+const payload = process.env.SHOPEE_STATIC_QRIS;
+if (!payload) throw new Error("SHOPEE_STATIC_QRIS belum diisi");
+
+shopee.setStaticQris(payload);
+await saveSecret("shopee-qris", {
+  payload: shopee.staticQris,
+  scope: shopee.staticQrisScope,
+});
+```
+
+CLI melakukan binding yang sama secara otomatis:
+
+```bash
+npx merchantid set-qris shopee
+```
+
+`setStaticQris` memvalidasi checksum dan menjalankan `staticToDynamicQris` sebelum menyimpan. Ia menolak bila belum ada merchant/store aktif. QRIS yang diikat direkam bersama owner-nya (`staticQrisScope`).
+
+## Owner QRIS dan store
+
+Scope Shopee memakai merchant bisnis sebagai `accountId` dan store terpilih sebagai `merchantId`. QRIS hanya aktif ketika `staticQrisScope` cocok dengan merchant/store itu. Store lain tidak mewarisi QRIS lama.
+
+```ts
+interface ShopeeStaticQrisScope {
+  merchantId: string; // business merchant
+  storeId: string;    // store pemilik
+}
+```
+
+Saat memulihkan sesi, sertakan QRIS dan owner-nya:
+
+```ts
+const shopee = new ShopeeProvider({
+  session: sessionFromSecretStore,
+  staticQris: qrisFromSecretStore.payload,
+  staticQrisScope: qrisFromSecretStore.scope,
+  onSessionUpdated: saveShopeeSession,
+});
+```
+
+`staticQrisScope` wajib bila QRIS tidak dapat diinfer dari restored session/store. Constructor boleh menginfer owner hanya dari session/store yang sudah dipilih.
+
+## Membuat dan memantau
+
+```ts
+const payment = await shopee.createPayment({
+  amount: 30_000,
+  reference: "order-shopee-17",
+});
+
+const result = await shopee.payments().tick();
+console.log(result.paid, result.expired);
+```
+
+`shopee.payments()` mengembalikan `PaymentService` untuk scope aktif (dibuat lazily; membutuhkan store terpilih). Event `paid`, `expired`, dan `error` serta `start()`/`stop()` bekerja sama seperti provider lain. Lihat [Model pembayaran](/concepts/payments).
+
+## Jebakan feed ShopeePay
+
+### Normalisasi ketat
+
+Shopee mengirim nominal seperti `"30.000"`. Parser hanya menerima digit polos atau kelompok ribuan Indonesia yang valid. Nilai ambigu seperti `"30.00"`, desimal, simbol mata uang, dan angka di luar safe integer ditolak.
+
+<Warning>
+  Jangan memakai `parseFloat`; `parseFloat("30.000")` menghasilkan 30 dan dapat melunasi pesanan salah. Parser ini diekspor sebagai `parseShopeeAmount` bila Anda membutuhkannya.
+</Warning>
+
+### Hanya status 3 yang sukses
+
+Hanya status numerik `3` yang dinormalisasi menjadi `completed`. Status lain menjadi label non-sukses `shopee:<kode>` dan tidak boleh dianggap lunas tanpa bukti baru.
+
+### Cursor next_position
+
+Feed menggunakan cursor `next_position`. Adapter mendeteksi cursor yang berulang atau tidak maju (melempar `ApiError`) dan melaporkan truncation bila `maxPages` tercapai. Jangan memaksakan pagination offset GoPay ke Shopee.
+
+## Transisi store dan payment aktif
+
+`selectStore()` menolak perpindahan bila scope lama masih memiliki payment aktif. Service rekonsiliasi disimpan per scope agar karantina nominal dan transaction id yang sudah dipakai tidak hilang saat berpindah lalu kembali. Selama login, discovery, atau pergantian store, seluruh service terkait dihentikan sampai perubahan sesi berhasil dipersist. Jika operasi gagal, sesi, cookie, dan polling sebelumnya dipulihkan.
+
+Reference `PaymentService` dari store lama menjadi inactive; `createPayment()`, `cancelPayment()`, `start()`, dan `tick()` akan ditolak. Ambil kembali service aktif melalui `shopee.payments()` setelah transisi selesai. Jika berpindah store, jalankan `set-qris shopee` atau `setStaticQris()` untuk store baru sebelum membuat QR payment. Lihat [Sesi Shopee](/shopee/sessions).
+
+## Referensi
+
+<CardGroup cols={2}>
+  <Card title="Model pembayaran" icon="money-bill-transfer" href="/concepts/payments">
+    Siklus, event, dan tuning.
+  </Card>
+  <Card title="Referensi ShopeeProvider" icon="code" href="/api/shopee-provider">
+    setStaticQris, createPayment, payments.
+  </Card>
+</CardGroup>

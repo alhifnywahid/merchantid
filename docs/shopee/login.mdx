@@ -1,0 +1,146 @@
+---
+title: "Login Shopee"
+description: "Alur OTP fetch-only tiga langkah, loginWithOtp untuk multi-merchant, dan CAPTCHA."
+---
+
+Shopee memakai alur OTP fetch-only tiga langkah: kirim OTP, verifikasi, lalu tukar hasil verifikasi menjadi sesi merchant. Untuk akun multi-merchant, `loginWithOtp` menyatukan langkah 2 dan 3 dengan penanganan ambiguitas.
+
+## Alur tiga langkah
+
+```ts
+import { ShopeeProvider } from "merchantid";
+
+const shopee = new ShopeeProvider({
+  onSessionUpdated: async (session) => {
+    await saveSecret("shopee-session", session);
+  },
+});
+
+// Langkah 1: mengirim OTP. Gunakan nomor dalam format internasional.
+// `password` wajib bila akun dilindungi password: tanpa itu Shopee melaporkan
+// sukses tetapi menahan pengiriman kodenya.
+const challenge = await shopee.requestOtp("6281234567890", {
+  password: passwordFromUser,
+});
+
+// Langkah 2: memverifikasi OTP dan mendapatkan daftar merchant.
+const verification = await shopee.verifyOtp({
+  challenge,
+  otp: otpFromUser,
+});
+
+const merchant = verification.merchants.find(
+  (item) => item.isActive && !item.isBanned,
+);
+if (!merchant) throw new Error("Tidak ada merchant Shopee yang dapat dipakai");
+
+// Langkah 3: menukar hasil verifikasi menjadi sesi merchant.
+let session = await shopee.completeLogin({
+  verification,
+  merchantId: merchant.id,
+});
+
+// Akun multi-store mungkin membutuhkan pilihan eksplisit.
+if (!session.storeId) {
+  const stores = await shopee.listStores();
+  const selected = stores[0];
+  if (!selected) throw new Error("Tidak ada store Shopee yang dapat dipakai");
+  session = await shopee.selectStore(selected.id);
+}
+
+await saveSecret("shopee-session", session);
+```
+
+<Warning>
+  `ShopeeOtpChallenge`, `ShopeeOtpVerification`, dan `ShopeeSession` berisi cookie atau state autentikasi sensitif. Jangan mengirim objek tersebut ke browser, mencetaknya ke log, atau menyimpannya sebagai fixture.
+</Warning>
+
+## Langkah 1: requestOtp
+
+```ts
+const challenge = await shopee.requestOtp("6281234567890", {
+  password: passwordFromUser, // wajib bila akun dilindungi password
+  channel: 3,                 // opsional: 1=SMS, 2=panggilan, 3=WhatsApp
+  deviceReport: reportFromBrowser, // opsional, lihat Device risk
+});
+```
+
+Password-protected account tidak menerima OTP sampai langkah password diterima. Tanpa password, `send_otp` melaporkan sukses tetapi kode ditahan diam-diam. Bila akun tak berpassword, langkah kedua faktor dilewati.
+
+`ShopeeOtpChallenge` membawa `channel`, `availableChannels`, `deviceFingerprint`, dan cookie. Bila channel yang diminta tidak tersedia, `requestOtp` melempar `ConfigError`. Lihat [Device risk](/shopee/device-risk).
+
+## Langkah 2: verifyOtp
+
+```ts
+const verification = await shopee.verifyOtp({ challenge, otp: otpFromUser });
+```
+
+OTP wajib 4-10 digit. `verifyOtp` mengembalikan `ShopeeOtpVerification` berisi state akun-sesi dan daftar `merchants`. Objek verification dapat dipakai ulang untuk memilih merchant tanpa OTP kedua.
+
+## Langkah 3: completeLogin
+
+```ts
+const session = await shopee.completeLogin({
+  verification,
+  merchantId: merchant.id, // opsional bila hanya satu merchant usable
+  storeId,                 // opsional
+});
+```
+
+`completeLogin` menukar hasil verifikasi menjadi `ShopeeSession`, membaca merchant credential dari cookie, lalu mengambil profil dan seluruh store. Bila `merchantId` tidak diberikan dan hanya satu merchant yang dapat dipakai, merchant itu dipilih otomatis; bila ambigu, ia melempar `ConfigError` dengan `availableMerchants`.
+
+## loginWithOtp untuk multi-merchant
+
+`loginWithOtp` menggabungkan langkah 2 dan 3 dalam satu panggilan dan mengembalikan `ShopeeLoginOutcome`.
+
+```ts
+const outcome = await shopee.loginWithOtp({ challenge, otp: otpFromUser });
+if (outcome.status === "merchant-selection-required") {
+  const chosen = await askUserToPick(outcome.merchants); // { id, name }[]
+  await shopee.completeLogin({
+    verification: outcome.verification,
+    merchantId: chosen.id,
+  });
+}
+```
+
+`ShopeeLoginOutcome` adalah union:
+
+- `{ status: "complete", session }` - merchant tidak ambigu (`merchantId` diberikan, atau hanya satu merchant usable).
+- `{ status: "merchant-selection-required", verification, merchants }` - akun mengakses lebih dari satu merchant usable dan tak ada `merchantId`. Bawa `verification` reusable dan daftar `merchants` agar picker dapat ditampilkan lalu diselesaikan dengan `completeLogin` - tanpa OTP kedua.
+
+<Note>
+  Perilaku ini menggantikan lemparan lama pada ambiguitas. Caller yang membaca sesi langsung harus switch pada `outcome.status` lebih dulu. Helper `usableMerchants(merchants)` dan `resolveSingleMerchant(merchants)` diekspor untuk mendeteksi ambiguitas sebelum berkomitmen pada login.
+</Note>
+
+## Login lewat CLI
+
+```bash
+npx merchantid login shopee
+```
+
+CLI meminta nomor telepon, password (opsional), lalu OTP. Bila akun multi-merchant, ia menampilkan pilihan merchant usable. Setelah login, ikat QRIS statis dengan `set-qris shopee`. Lihat [Ikhtisar CLI](/cli/overview).
+
+## CAPTCHA
+
+Bila Shopee meminta CAPTCHA, library melempar `CaptchaRequiredError` dengan code `CAPTCHA_REQUIRED`:
+
+```ts
+import { CaptchaRequiredError } from "merchantid";
+
+try {
+  await shopee.requestOtp("6281234567890");
+} catch (error) {
+  if (error instanceof CaptchaRequiredError) {
+    // Hentikan otomasi dan selesaikan verifikasi lewat alur resmi Shopee.
+  } else {
+    throw error;
+  }
+}
+```
+
+Library tidak mencoba melewati CAPTCHA.
+
+## Referensi
+
+Lihat [Referensi API ShopeeProvider](/api/shopee-provider) untuk tanda tangan lengkap dan [tipe](/api/types) untuk `ShopeeOtpChallenge`, `ShopeeOtpVerification`, `ShopeeSession`, dan `ShopeeLoginOutcome`.

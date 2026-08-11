@@ -1,0 +1,75 @@
+---
+title: "Bantuan dan troubleshooting"
+description: "Masalah umum: OTP tidak tiba, sesi mati, pembayaran tak terdeteksi, dan dukungan runtime."
+---
+
+Kumpulan masalah yang paling sering ditemui beserta penyebab dan solusinya.
+
+## OTP tidak tiba
+
+### Shopee: kode ditahan diam-diam
+
+Bila `requestOtp` melaporkan sukses tetapi tidak ada kode yang tiba, dua penyebab paling umum:
+
+- **Password tidak diberikan pada akun berpassword.** Shopee hanya mengirim OTP setelah langkah password diterima. Berikan `password` pada `requestOtp`.
+- **Device report tidak dikenali.** Laporan device-risk yang degraded membuat Shopee menahan pengiriman meski endpoint melaporkan sukses. Tangkap laporan dari browser Anda sendiri dan berikan lewat `deviceReport`. Lihat [Device risk](/shopee/device-risk).
+
+### GoPay: tidak ada otpToken
+
+Bila `requestOtp` GoPay mengembalikan hasil tanpa `otpToken`, login tidak dapat lanjut. Periksa format nomor telepon dan coba lagi. `requestOtp` menerima format Indonesia apa pun (62/+62/08/8).
+
+## CAPTCHA diminta
+
+Bila `CaptchaRequiredError` (code `CAPTCHA_REQUIRED`) dilempar, hentikan otomasi dan selesaikan verifikasi lewat alur resmi provider. Library tidak membypass CAPTCHA. Retry agresif atau mengubah fingerprint untuk menghindari challenge tidak didukung. Lihat [Login Shopee](/shopee/login#captcha).
+
+## Sesi mati
+
+### GoPay: AUTH_FAILED saat polling
+
+Login dari perangkat lain dapat mencabut sesi GoPay. Polling akan surface `AuthError` dengan code `AUTH_FAILED`. Perlakukan sebagai kebutuhan login ulang, bukan status belum dibayar. Lihat [Login GoPay](/gopay/login#sesi-dicabut).
+
+### Shopee: AUTH_REQUIRED saat refresh
+
+`refreshSession` melempar `AUTH_REQUIRED` bila sesi akun sudah mati - hanya login OTP baru yang memulihkan. Jangan retry diam-diam. Ingat: `exp` cookie dashboard (~1000 hari) tidak mencerminkan sesi server; jangan memakainya untuk menilai liveness. Lihat [Sesi Shopee](/shopee/sessions).
+
+### Shopee: sesi lama tak bisa refresh/switch
+
+Sesi tanpa `switchCredential` (dibuat sebelum dukungan renewal atau diimpor dari cookie mentah) menolak `refreshSession` dan `selectMerchant` dengan `AUTH_REQUIRED`. Login OTP baru untuk mendapatkan sesi yang mendukung renewal.
+
+## Pembayaran tak terdeteksi
+
+### Feed terlambat mengindeks
+
+Default masa berlaku 5 menit sering terlalu pendek untuk scheduler lambat. Naikkan `payment.defaultExpiryMs` agar mencakup interval scheduler dan keterlambatan feed. Rekonsiliasi berjalan sebelum expiry, dan grace window `clockSkewMs` menahan jeda indexing - tetapi hanya sampai batas masa berlaku + skew. Lihat [Model pembayaran](/concepts/payments).
+
+### Nominal tidak cocok
+
+- **GoPay:** feed mengirim satuan minor (Rp 3.001 = `300100`), dibagi tepat 100. Jangan menerima kedua skala di matcher.
+- **Shopee:** nominal seperti `"30.000"` diparse ketat. Bentuk ambigu (`"30.00"`, desimal, simbol) ditolak. `parseFloat` salah di sini.
+
+### QRIS Shopee tidak aktif
+
+QRIS Shopee hanya aktif bila `staticQrisScope` cocok dengan merchant/store aktif. Setelah berpindah store, ikat QRIS baru dengan `set-qris shopee` atau `setStaticQris()`. Store lain tidak mewarisi QRIS lama. Lihat [Pembayaran Shopee](/shopee/payments).
+
+## AMOUNT_POOL_EXHAUSTED
+
+Semua offset dalam jendela (`1..maxUniqueOffset`, default 999) untuk suatu base amount sedang terpakai. Pendekkan masa berlaku pembayaran agar slot lebih cepat bebas, atau naikkan `payment.maxUniqueOffset`. Ingat karantina `2 x clockSkewMs` menahan nominal bekas sementara.
+
+## Dukungan runtime
+
+| Runtime                | Status           | Pola rekonsiliasi                              |
+| ---------------------- | ---------------- | ---------------------------------------------- |
+| Node.js 18+            | Diuji di CI      | `start()` atau scheduler dengan `tick()`       |
+| Cloudflare Workers     | Belum diuji      | Cron/Alarm memanggil `tick()`                  |
+| Vercel Edge, Deno, Bun | Belum diuji      | Scheduler platform memanggil `tick()`          |
+| Browser                | Tidak dianjurkan | Jangan tempatkan kredensial merchant di client |
+
+CI menjalankan Node 18 dan 24 di Linux serta Node 24 di Windows. Runtime lain diharapkan bekerja tetapi belum diverifikasi: core dan API publik tidak mengimpor satu pun Node builtin - kriptografi memakai `globalThis.crypto` dengan fallback, dan `node:fs`, `node:os`, `node:path`, serta `node:readline/promises` hanya dipakai CLI.
+
+### Tidak ada fetch global
+
+Bila runtime tidak menyediakan `fetch` global, konstruksi provider melempar `ConfigError`. Injeksikan implementasi lewat opsi `fetch`. Lihat [Instalasi](/guide/installation#verifikasi-runtime).
+
+## Masih bermasalah?
+
+Buka issue di [GitHub](https://github.com/alhifnywahid/merchantid/issues). Jangan menyalin token, cookie, OTP, nomor telepon, merchant id nyata, atau QRIS asli ke issue. Lihat juga [FAQ](/troubleshooting/faq).
