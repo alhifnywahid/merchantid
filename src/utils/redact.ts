@@ -4,8 +4,8 @@
  * Provider error messages are useful for debugging but arrive unvetted, so they
  * are filtered before being attached to an error or a log line. This rule lives
  * in one place on purpose: it previously existed as two near-identical copies
- * that had already drifted — the GoPay copy had lost the credential-keyword
- * check entirely — and a security rule that differs per provider is a rule that
+ * that had already drifted - the GoPay copy had lost the credential-keyword
+ * check entirely - and a security rule that differs per provider is a rule that
  * will be wrong somewhere.
  *
  * The filter is deliberately blunt: anything long enough to be a token, or that

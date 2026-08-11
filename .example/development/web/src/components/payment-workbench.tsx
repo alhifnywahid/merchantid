@@ -21,7 +21,7 @@ interface PaymentWorkbenchProps {
 }
 
 /**
- * Shows the QRIS binding step or the payment form — never both. The step that
+ * Shows the QRIS binding step or the payment form - never both. The step that
  * is not yet reachable simply is not rendered.
  */
 export function PaymentWorkbench(props: PaymentWorkbenchProps) {

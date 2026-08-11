@@ -9,7 +9,7 @@ import { saveStaticQris } from "@/server/functions";
 
 /**
  * The QRIS source step. GoPay derives its static payload from the selected
- * outlet during discovery, so there is nothing to enter — the operator only
+ * outlet during discovery, so there is nothing to enter - the operator only
  * needs to pick an outlet. Shopee has no discovery endpoint for the store QRIS,
  * so its payload is pasted once and validated server-side.
  */

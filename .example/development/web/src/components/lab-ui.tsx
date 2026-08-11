@@ -269,7 +269,7 @@ export function ThemeSwitch() {
       const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
       if (stored === "light" || stored === "dark") setMode(stored);
     } catch {
-      /* Ignore — the default already matches the rendered markup. */
+      /* Ignore - the default already matches the rendered markup. */
     }
   }, []);
 
@@ -314,11 +314,11 @@ export function formatCurrency(value: number): string {
 }
 
 export function formatDateTime(value: number | undefined): string {
-  return value ? `${dateFormatter.format(value)} WIB` : "—";
+  return value ? `${dateFormatter.format(value)} WIB` : "-";
 }
 
 export function shortId(value: string | undefined): string {
-  if (!value) return "—";
+  if (!value) return "-";
   if (value.length <= 12) return value;
   return `${value.slice(0, 5)}…${value.slice(-4)}`;
 }

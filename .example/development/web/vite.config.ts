@@ -17,7 +17,7 @@ const repoRoot = fileURLToPath(new URL("../../", import.meta.url));
 export default defineConfig({
   server: {
     // Loopback only. The lab's server functions drive real provider APIs with
-    // no authentication of their own — reachable on a LAN, `requestOtp` would
+    // no authentication of their own - reachable on a LAN, `requestOtp` would
     // be an open relay that sends real OTPs from the operator's own merchant
     // account to any phone number a caller supplies.
     host: "127.0.0.1",

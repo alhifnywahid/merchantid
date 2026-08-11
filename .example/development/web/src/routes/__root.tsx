@@ -10,7 +10,7 @@ import appCss from "../styles.css?url";
 const description =
   "Utility lokal live-only untuk menguji integrasi GoPay dan Shopee melalui package MerchantId.";
 
-/** Coral registration mark on near-black — the drafting motif at 16px. */
+/** Coral registration mark on near-black - the drafting motif at 16px. */
 const favicon =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f0f0f'/%3E%3Cpath d='M16 8.5v15M8.5 16h15' stroke='%23e93954' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E";
 

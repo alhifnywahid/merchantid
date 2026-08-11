@@ -125,8 +125,8 @@ function rotateRight(value: number, bits: number): number {
  * `--experimental-global-webcrypto`, and Node 18 is inside this package's
  * supported range. Without this fallback, Shopee's password step throws on
  * exactly the runtime the manifest promises to support. MD5 above is
- * hand-rolled for the same reason — the wire format needs it and no runtime
- * offers it — so the module stays self-sufficient rather than conditional on
+ * hand-rolled for the same reason - the wire format needs it and no runtime
+ * offers it - so the module stays self-sufficient rather than conditional on
  * an API that is not universally present.
  */
 function sha256Digest(bytes: Uint8Array): Uint8Array {

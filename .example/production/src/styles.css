@@ -1,5 +1,5 @@
 /*
- * MerchantId Console — production integration surface.
+ * MerchantId Console - production integration surface.
  *
  * Implements the Tokokino design language (see ../../development/web/design.md)
  * mapped onto shadcn/ui's semantic token names, so shadcn components inherit
@@ -7,7 +7,7 @@
  * hairlines and dashed drafting rails instead of shadows, tight negative
  * tracking on headings, and exactly two motion durations.
  *
- * This is the "editor" density tier of that system — an instrument an operator
+ * This is the "editor" density tier of that system - an instrument an operator
  * runs a till from, not a marketing page.
  *
  * Two documented deviations, both for WCAG 2.1 AA on the coral fill:
@@ -42,7 +42,7 @@
   --muted: oklch(95.51% 0 0);
   --muted-foreground: oklch(53.82% 0 0);
 
-  /* State wash — never a button fill. */
+  /* State wash - never a button fill. */
   --accent: oklch(88.09% 0.0837 144.82 / 0.22);
   --accent-foreground: oklch(48.08% 0.1306 144.91);
 

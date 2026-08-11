@@ -26,7 +26,7 @@ export const SHOPEE_ENDPOINTS = {
   /**
    * Liveness probe for the passport account session. Answers `error:0` with the
    * signed-in user while the SPC_* account cookies are still valid, and
-   * `48500102` ("not login") once they are not — the signal that separates a
+   * `48500102` ("not login") once they are not - the signal that separates a
    * session that can be renewed silently from one that needs a new OTP.
    */
   loginStatus: "/api/v4/account/business/login_status",
@@ -128,7 +128,7 @@ export const SHOPEE_CLIENT_ID_COOKIE = "SPC_CLIENTID";
  * `200020` is Shopee's generic "NotAuthorized" (per the web bundle's own map:
  * `{NotAuthorized:200020, AccessDenied:200013, ErrorWebTokenInvalid:200026}`).
  * It was once treated as a transient, retryable state that a fresh merchant
- * token would clear; live testing disproved that — a token the dashboard API
+ * token would clear; live testing disproved that - a token the dashboard API
  * answers `200020` for stays rejected however long the caller waits. Treating
  * it as terminal is therefore the honest classification: the session must be
  * renewed (`ShopeeProvider.refreshSession`) or re-established with an OTP.

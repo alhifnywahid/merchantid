@@ -7,7 +7,7 @@ const OPTIONS = [
   { value: "dark", label: "DK" },
 ] as const;
 
-// A segmented mono switch, not a sun/moon toggle — the drafting-instrument
+// A segmented mono switch, not a sun/moon toggle - the drafting-instrument
 // idiom of the system.
 export function ThemeSwitch() {
   const { pref, setPref } = useTheme();

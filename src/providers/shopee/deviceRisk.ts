@@ -22,7 +22,7 @@
  * 2. If Shopee flags this fingerprint, it stops working for everyone at once.
  * 3. Supplying a device report that does not describe the machine actually
  *    making the request is, in substance, working around an anti-fraud
- *    control — which may breach Shopee's terms and put the merchant account at
+ *    control - which may breach Shopee's terms and put the merchant account at
  *    risk of suspension.
  *
  * Prefer the honest alternative: capture your own report from your own browser

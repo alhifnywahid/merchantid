@@ -8,9 +8,9 @@ menjalankan kasir QRIS GoPay dan ShopeePay. Dibangun dengan **TanStack Start**
 Berbeda dari `../development/web` yang berupa lab satu halaman, konsol ini
 adalah dua permukaan kerja:
 
-- **Kasir** (`/`) — login provider → pilih outlet/store → input nominal →
+- **Kasir** (`/`) - login provider → pilih outlet/store → input nominal →
   tampilan QRIS besar dengan hitung mundur → cek status.
-- **Riwayat** (`/riwayat`) — ledger pembayaran per-scope + rekonsiliasi +
+- **Riwayat** (`/riwayat`) - ledger pembayaran per-scope + rekonsiliasi +
   catatan aktivitas server.
 
 ## Menjalankan
@@ -31,9 +31,9 @@ jadi dev server dikunci ke **loopback (`127.0.0.1`)**. Di LAN, `requestOtp`
 akan menjadi relay OTP terbuka dari akun merchant operator ke nomor mana pun.
 
 - `data/`, `*session*.json`, `console-state.json`, `payments.json`, dan
-  `.flow/` di-gitignore — kredensial provider tidak pernah masuk git.
+  `.flow/` di-gitignore - kredensial provider tidak pernah masuk git.
 - Semua pesan error digosok lewat `redactSensitiveText` sebelum sampai ke DOM.
-- Menghapus file kredensial **tidak** mencabut sesi di sisi server — putar
+- Menghapus file kredensial **tidak** mencabut sesi di sisi server - putar
   ulang (rotate) kredensial bila perlu.
 
 ## Struktur

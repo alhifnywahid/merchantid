@@ -8,7 +8,7 @@ dist/
 .tanstack/
 .vite/
 
-# Real provider credentials — never commit
+# Real provider credentials - never commit
 data/
 *session*.json
 lab-state.json

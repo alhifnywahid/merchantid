@@ -65,8 +65,8 @@ export class HttpError extends MerchantIdError {
   public readonly status: number;
   /**
    * The parsed (or raw) response body, for callers that need to inspect a
-   * provider failure. Deliberately **non-enumerable**: `util.inspect` — which
-   * is what `console.error(err)` uses — prints an error's own enumerable
+   * provider failure. Deliberately **non-enumerable**: `util.inspect` - which
+   * is what `console.error(err)` uses - prints an error's own enumerable
    * properties, so an enumerable body would dump the provider's entire
    * response, credentials included, into the caller's logs the moment anyone
    * logged the error. Reading `error.body` still works exactly as before.

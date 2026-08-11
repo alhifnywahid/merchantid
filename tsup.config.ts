@@ -20,7 +20,7 @@ export default defineConfig([
   },
   {
     // The CLI is only ever executed through the `bin` entry, which resolves to
-    // the CJS build. An ESM twin was shipped but unreachable — nothing in
+    // the CJS build. An ESM twin was shipped but unreachable - nothing in
     // `exports` or `bin` pointed at it.
     entry: { cli: "src/cli.ts" },
     format: ["cjs"],

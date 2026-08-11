@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 // Inputs signal focus by border colour alone; buttons by ring. That split is
-// deliberate in the Tokokino system — do not add a ring here.
+// deliberate in the Tokokino system - do not add a ring here.
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input

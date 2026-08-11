@@ -38,7 +38,7 @@ function makeService(transactions: TransactionLister): PaymentService {
 }
 
 /**
- * A tick with nothing pending short-circuits before touching the feed — that is
+ * A tick with nothing pending short-circuits before touching the feed - that is
  * intentional (no work, no provider call), so every polling assertion needs a
  * live payment for the poll to be observable.
  */

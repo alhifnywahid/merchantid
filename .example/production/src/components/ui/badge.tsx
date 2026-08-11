@@ -2,8 +2,8 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-// Mono uppercase pill with a leading status dot. The dot is semantic here —
-// it marks provider/payment state — which is the one case the design system
+// Mono uppercase pill with a leading status dot. The dot is semantic here -
+// it marks provider/payment state - which is the one case the design system
 // permits a coloured status dot.
 const badgeVariants = cva(
   "inline-flex items-center gap-1.5 rounded-sm border px-1.5 py-0.5 font-mono text-[0.625rem] uppercase leading-tight tracking-[0.06em] whitespace-nowrap before:size-[0.3125rem] before:rounded-full before:bg-current before:content-['']",

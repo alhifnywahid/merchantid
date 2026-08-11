@@ -22,7 +22,7 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 /**
  * Applies the stored theme before first paint to avoid a flash. Injected into
- * <head> as a blocking script — it mirrors the resolution logic below.
+ * <head> as a blocking script - it mirrors the resolution logic below.
  */
 export const themeBootScript = `(function(){try{var p=localStorage.getItem("${STORAGE_KEY}")||"system";var d=p==="dark"||(p==="system"&&matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.setAttribute("data-theme",d?"dark":"light");}catch(e){}})();`;
 

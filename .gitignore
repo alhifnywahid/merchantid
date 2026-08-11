@@ -42,7 +42,7 @@ coverage
 #
 # These hold real recorded sessions: cookies, bearer tokens, OTP exchanges, and
 # merchant identifiers. They must never reach GitHub or npm. Both a filename
-# rule and a directory rule are listed on purpose — either one alone would be a
+# rule and a directory rule are listed on purpose - either one alone would be a
 # single point of failure, and captures have a habit of being saved somewhere
 # new. `**/` makes the filename rules apply at any depth.
 **/*.har

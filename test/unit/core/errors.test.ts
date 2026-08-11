@@ -15,7 +15,7 @@ describe("HttpError", () => {
   it("does not leak the body when the error is logged", () => {
     // `console.error(err)` formats via util.inspect, which prints an error's
     // own *enumerable* properties. An enumerable body would put the provider's
-    // entire response — credentials included — into the caller's logs.
+    // entire response - credentials included - into the caller's logs.
     const error = new HttpError(422, "boom", secretBody, { host: "api.test" });
 
     const printed = inspect(error);

@@ -22,15 +22,15 @@ export function formatCurrency(value: number): string {
 }
 
 export function formatDateTime(value: number | undefined): string {
-  return value ? `${dateTime.format(value)} WIB` : "—";
+  return value ? `${dateTime.format(value)} WIB` : "-";
 }
 
 export function formatClock(value: number | undefined): string {
-  return value ? clock.format(value) : "—";
+  return value ? clock.format(value) : "-";
 }
 
 export function shortId(value: string | undefined): string {
-  if (!value) return "—";
+  if (!value) return "-";
   if (value.length <= 12) return value;
   return `${value.slice(0, 5)}…${value.slice(-4)}`;
 }

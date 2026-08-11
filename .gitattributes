@@ -1,8 +1,8 @@
 # Normalize every text file to LF in the repository and on checkout.
 #
 # Without this, Git for Windows (`core.autocrlf=true` by default) hands the
-# Windows CI runner CRLF working copies, and `prettier --check` — which formats
-# to LF — then fails on every file while the Linux runners pass. Pinning the
+# Windows CI runner CRLF working copies, and `prettier --check` - which formats
+# to LF - then fails on every file while the Linux runners pass. Pinning the
 # line ending here makes the checkout identical on all three platforms.
 * text=auto eol=lf
 

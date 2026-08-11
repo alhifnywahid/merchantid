@@ -1,7 +1,7 @@
 version: 2
 updates:
   # The library has zero runtime dependencies; these are the build and test
-  # toolchain. Monthly keeps the signal useful — weekly would be noise for a
+  # toolchain. Monthly keeps the signal useful - weekly would be noise for a
   # single-maintainer project.
   - package-ecosystem: npm
     directory: "/"

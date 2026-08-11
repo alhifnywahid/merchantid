@@ -34,7 +34,7 @@ function toSafeMessage(caught: unknown): string {
 /**
  * Holds the live console snapshot on the client and funnels every mutation
  * through one queue-aware runner. A single action may be in flight at a time
- * (`pendingAction`), which the whole UI reads to disable controls — the server
+ * (`pendingAction`), which the whole UI reads to disable controls - the server
  * runtime is serial, so parallel clicks would only race for the same lock.
  */
 export function ConsoleProvider({

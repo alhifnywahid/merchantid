@@ -4,8 +4,8 @@
  * Implements the Tokokino design language (see ../design.md): near-neutral
  * greys carrying one coral action colour, hairlines and dashed drafting rails
  * instead of shadows, tight negative tracking on headings, and exactly two
- * motion durations. Density follows the "editor" tier of that system — 28px
- * control rows, 12px UI text — because this lab is an instrument.
+ * motion durations. Density follows the "editor" tier of that system - 28px
+ * control rows, 12px UI text - because this lab is an instrument.
  *
  * The layout rule is progressive disclosure: a surface is rendered only once
  * it can be acted on, so there are no disabled placeholders and no copy
@@ -51,7 +51,7 @@
   --muted: var(--secondary);
   --muted-foreground: light-dark(oklch(53.82% 0 0), oklch(61.79% 0.0019 325.6));
 
-  /* State wash — never a button fill. */
+  /* State wash - never a button fill. */
   --accent: light-dark(
     oklch(88.09% 0.0837 144.82 / 0.22),
     oklch(30.46% 0.0816 144.31 / 0.27)
@@ -236,7 +236,7 @@ code,
   text-transform: uppercase;
 }
 
-/* Full-bleed dashed section rule — the system's boundary marker. */
+/* Full-bleed dashed section rule - the system's boundary marker. */
 .rule {
   width: 99.6vw;
   height: 1px;
@@ -552,7 +552,7 @@ code,
   color: var(--destructive);
 }
 
-/* Key/value grid — every metadata read-out in the app. */
+/* Key/value grid - every metadata read-out in the app. */
 .kv {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
@@ -861,7 +861,7 @@ code,
 }
 
 /* The panel remounts on every provider switch, so this is the system's one
-   reveal — 500ms, and it never drops below a readable opacity. */
+   reveal - 500ms, and it never drops below a readable opacity. */
 .panel {
   animation: panel-in var(--slow) var(--ease) both;
 }
@@ -1311,7 +1311,7 @@ code,
     align-self: center;
   }
 
-  /* Five stacked hairlines read as a list, not as progress — keep the rail
+  /* Five stacked hairlines read as a list, not as progress - keep the rail
      horizontal and let the mono labels truncate. */
   .stepper {
     gap: 0.25rem;

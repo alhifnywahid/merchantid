@@ -49,7 +49,7 @@ export function parseEmv(payload: string): EmvTlvMap {
 
     const length = Number.parseInt(lengthText, 10);
     // Without this bound a truncated payload parses "successfully" and is then
-    // re-emitted under a freshly computed, perfectly valid CRC — corrupt
+    // re-emitted under a freshly computed, perfectly valid CRC - corrupt
     // merchant data wearing a good checksum.
     if (cursor + length > bytes.length) malformed();
 
@@ -123,7 +123,7 @@ export function staticToDynamicQris(
 
   // Verify the source checksum before trusting the payload. This function
   // recomputes a *fresh* CRC over whatever it is given, so a corrupted or
-  // hand-edited payload — a swapped merchant PAN, say — would otherwise be
+  // hand-edited payload - a swapped merchant PAN, say - would otherwise be
   // re-emitted as a perfectly valid QR that redirects the payment. The
   // checksum is the only integrity signal available, so it is checked here,
   // at the single point where a static payload becomes a payable one.

@@ -96,10 +96,10 @@ Semua input mutasi melewati validator server function. Operasi runtime diserialk
 
 ## Sistem visual
 
-UI mengikuti bahasa desain pada [`design.md`](design.md) — greys netral dengan satu warna aksi coral, garis rambut dan rel putus-putus sebagai pengganti bayangan, serta tracking negatif yang mengetat seiring ukuran heading. Kepadatannya memakai tier *editor* dari sistem itu: baris kontrol 28px, teks UI 12px, dan eyebrow mono.
+UI mengikuti bahasa desain pada [`design.md`](design.md) - greys netral dengan satu warna aksi coral, garis rambut dan rel putus-putus sebagai pengganti bayangan, serta tracking negatif yang mengetat seiring ukuran heading. Kepadatannya memakai tier *editor* dari sistem itu: baris kontrol 28px, teks UI 12px, dan eyebrow mono.
 
 - **Progressive disclosure.** Sebuah surface hanya dirender kalau sudah bisa dipakai, jadi tidak ada placeholder disabled dan tidak ada kalimat yang menjelaskan apa yang belum tersedia. Kolom kiri menampilkan kartu login **atau** kartu sesi, tidak pernah keduanya; workbench muncul setelah scope siap dan menampilkan langkah QRIS **atau** form pembayaran; ledger dan catatan aktivitas hilang saat kosong. Layout otomatis jadi satu kolom saat workbench belum ada.
-- **Copy.** Satu kalimat prosa di seluruh halaman — peringatan akun live. Sisanya label, nilai, atau kontrol. Penjelasan panjang tinggal di README ini, bukan di UI.
+- **Copy.** Satu kalimat prosa di seluruh halaman - peringatan akun live. Sisanya label, nilai, atau kontrol. Penjelasan panjang tinggal di README ini, bukan di UI.
 - **Token.** Semua warna hidup di `:root` sebagai `oklch()` di dalam `light-dark()`, jadi mode terang dan gelap berbagi satu definisi dan `color-scheme` yang menentukan hasilnya. Komponen memakai token atau turunan `color-mix()`, bukan literal.
 - **Tema.** Kontrol segmented `sys / trg / glp` menyimpan pilihan di `localStorage`, dan snippet blocking di `<head>` memasangnya sebelum paint pertama sehingga tidak ada kedipan.
 - **Tanpa elevasi.** Tidak ada satu pun `box-shadow` atau gradient fill pada chrome. Pemisahan datang dari garis rambut, permukaan beralpha, `backdrop-filter`, dan radius bertingkat.

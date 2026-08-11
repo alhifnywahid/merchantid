@@ -39,8 +39,8 @@ interface ProviderAccessProps {
 }
 
 /**
- * GoPay never reaches the merchant/store stages — its scope is chosen from the
- * session card after login — so the rail is provider-shaped, not five fixed
+ * GoPay never reaches the merchant/store stages - its scope is chosen from the
+ * session card after login - so the rail is provider-shaped, not five fixed
  * steps.
  */
 const stageFlow: Record<ProviderId, Array<{ stage: AuthStage; label: string }>> =
@@ -575,7 +575,7 @@ function OptionField({
         {options.map((option) => (
           <option key={option.id} value={option.id}>
             {option.label}
-            {option.detail ? ` — ${option.detail}` : ""}
+            {option.detail ? ` - ${option.detail}` : ""}
           </option>
         ))}
       </Select>

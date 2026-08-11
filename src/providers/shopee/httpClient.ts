@@ -109,7 +109,7 @@ export class ShopeeHttpClient {
     };
     // The partner API host authenticates purely via the `X-Merchant-Token`
     // header and, in the reference capture, never receives a cookie. Attaching
-    // the dashboard token cookie is not just unnecessary — after a merchant
+    // the dashboard token cookie is not just unnecessary - after a merchant
     // switch it carries the *previous* merchant's token, so the server sees it
     // contradict the fresh `X-Merchant-Token` and rejects the call with 200020.
     // Mirror the browser and omit cookies for this host only; shopeepay and the

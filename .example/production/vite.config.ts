@@ -5,14 +5,14 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
 // This console consumes the published `merchantid` package from npm, so it is a
-// self-contained app — no link to the repo root. `merchantid` is externalized
+// self-contained app - no link to the repo root. `merchantid` is externalized
 // for SSR so Node loads the installed package from node_modules directly.
 const srcRoot = fileURLToPath(new URL("./src", import.meta.url));
 
 export default defineConfig({
   server: {
     // Loopback only. The server functions drive real provider APIs with no
-    // authentication of their own — on a LAN, `requestOtp` would be an open
+    // authentication of their own - on a LAN, `requestOtp` would be an open
     // relay sending real OTPs from the operator's merchant account to any
     // number a caller supplies.
     host: "127.0.0.1",

@@ -35,7 +35,7 @@ function domainMatches(hostname: string, cookie: ShopeeCookie): boolean {
  * Reject `Domain` attributes that are a public suffix rather than a registrable
  * domain, e.g. `Domain=co.id` from `partner.shopee.co.id`. Plain suffix
  * matching would accept it and then send that cookie to *every* `*.co.id` host
- * the client is ever redirected to — a session token handed to strangers.
+ * the client is ever redirected to - a session token handed to strangers.
  *
  * This is a deliberately small check rather than a bundled public-suffix list:
  * the jar only ever talks to a fixed set of Shopee hosts, and a list would be

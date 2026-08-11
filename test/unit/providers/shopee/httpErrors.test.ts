@@ -6,7 +6,7 @@ import type { FetchLike } from "../../../../src/http/httpClient.js";
 /**
  * Transport-level failure handling for the Shopee client. The GoPay client has
  * an equivalent suite; this one existed only for cookie scoping, leaving every
- * error path — timeout, 401/403, non-2xx, non-JSON, redirect chains — unproven.
+ * error path - timeout, 401/403, non-2xx, non-JSON, redirect chains - unproven.
  */
 
 const URL_UNDER_TEST = "https://api.partner.shopee.co.id/nb/mss/probe";

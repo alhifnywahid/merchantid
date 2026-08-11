@@ -26,7 +26,7 @@ function useNow(active: boolean, intervalMs = 1000): number {
 /**
  * The scan surface. Shows the newest pending payment for the active provider as
  * a large framed QR with a live countdown, plus reconcile/cancel. When nothing
- * is pending it collapses to a quiet prompt — the till is idle, not broken.
+ * is pending it collapses to a quiet prompt - the till is idle, not broken.
  */
 export function QrisStage({
   payment,

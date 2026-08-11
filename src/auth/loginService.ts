@@ -172,7 +172,7 @@ export class LoginService {
    * state of the instance this service was constructed with.
    *
    * Returns `false` for *any* failure, so a rejected session and an unreachable
-   * network are indistinguishable here by design — the probe answers one
+   * network are indistinguishable here by design - the probe answers one
    * question ("can this session be used right now?") and a timeout is a
    * legitimate "no". Callers that must tell the two apart should make a real
    * request and inspect the thrown `AuthError` / `HttpError` instead of

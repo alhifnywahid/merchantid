@@ -52,7 +52,7 @@ type PendingAuth =
  * JWE whose second segment is empty and third is only 16 chars, so a
  * three-segment JWT pattern misses it, and a `Cookie:` header loses only its
  * first pair because the value rule stops at `;`. The final pass is therefore
- * value-shaped — any long opaque run, dotted or not, is replaced whole.
+ * value-shaped - any long opaque run, dotted or not, is replaced whole.
  * Over-redacting an error costs nothing; under-redacting ships a live
  * credential into the DOM.
  */

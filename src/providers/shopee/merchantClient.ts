@@ -104,7 +104,7 @@ export class ShopeeMerchantClient {
    *
    * The dashboard's store page filters by `serviceList` (`SHOPEE_STORE_SERVICES`)
    * and that filter is mirrored here, but some merchants own stores that carry
-   * neither service and are then omitted entirely — the merchant looks store-less
+   * neither service and are then omitted entirely - the merchant looks store-less
    * and no payment scope can be selected. When the filtered query finds nothing,
    * repeat it unfiltered so those stores are still discovered. Merchants whose
    * stores do match keep the exact filtered result the browser sees.

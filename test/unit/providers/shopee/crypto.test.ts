@@ -9,7 +9,7 @@ import {
 /**
  * `globalThis.crypto` is absent on Node 18 unless it is started with
  * `--experimental-global-webcrypto`, and Node 18 is inside this package's
- * supported range — so the bundled SHA-256 is the code path that actually runs
+ * supported range - so the bundled SHA-256 is the code path that actually runs
  * there. It is verified against Node's own implementation rather than a
  * handful of copied digests, with the block-boundary lengths where padding
  * bugs hide.

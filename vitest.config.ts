@@ -18,7 +18,7 @@ export default defineConfig({
       exclude: ["src/cli/**", "src/index.ts", "src/providers/**/index.ts"],
       thresholds: {
         // Global floor, plus a hard bar on the code that decides where money
-        // goes. These are the numbers the suite already meets — they exist to
+        // goes. These are the numbers the suite already meets - they exist to
         // stop regressions, not to chase a percentage.
         lines: 70,
         functions: 70,
