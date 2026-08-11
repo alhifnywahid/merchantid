@@ -1,6 +1,6 @@
 {
   "name": "merchantid",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MerchantId - Extensible, zero-runtime-dependency payment toolkit for GoPay and Shopee merchants in Indonesia. Creates dynamic QRIS payments and reconciles provider transaction feeds.",
   "repository": {
     "type": "git",
