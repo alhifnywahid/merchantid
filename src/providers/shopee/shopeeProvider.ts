@@ -14,7 +14,7 @@ import { isValidQrisChecksum, staticToDynamicQris } from "../../qris/qris.js";
 import type { Logger } from "../../utils/logger.js";
 import { noopLogger } from "../../utils/logger.js";
 import type { ShopeeApiLocale } from "./api.js";
-import { ShopeeAuthClient } from "./authClient.js";
+import { ShopeeAuthClient, resolveSingleMerchant } from "./authClient.js";
 import { SHOPEE_PROVIDER_ID } from "./constants.js";
 import { ShopeeCookieJar } from "./cookieJar.js";
 import { ShopeeHttpClient } from "./httpClient.js";
@@ -23,6 +23,7 @@ import { readShopeeMerchantCredential } from "./token.js";
 import { ShopeeTransactionFeed } from "./transactionFeed.js";
 import type {
   ShopeeCompleteLoginInput,
+  ShopeeLoginOutcome,
   ShopeeLoginWithOtpInput,
   ShopeeMerchantProfile,
   ShopeeMerchantSummary,
@@ -280,7 +281,18 @@ export class ShopeeProvider implements MerchantProvider<ShopeeSession> {
     );
   }
 
-  async loginWithOtp(input: ShopeeLoginWithOtpInput): Promise<ShopeeSession> {
+  /**
+   * Verify the OTP and, when the target merchant is unambiguous, finish the
+   * login in one call. When the account can reach more than one usable business
+   * merchant and no `merchantId` was supplied, this does NOT throw: it returns
+   * `status: "merchant-selection-required"` with the sensitive `verification`
+   * and the usable `merchants`, so a caller can present a picker and finish with
+   * {@link completeLogin} - reusing the verification, no second OTP. Supplying a
+   * `merchantId` always drives straight to a completed session.
+   */
+  async loginWithOtp(
+    input: ShopeeLoginWithOtpInput,
+  ): Promise<ShopeeLoginOutcome> {
     return this.runPaymentTransition(() =>
       this.withPaymentTransitionRollback(async () => {
         const verification = await this.auth.verifyOtp({
@@ -288,11 +300,24 @@ export class ShopeeProvider implements MerchantProvider<ShopeeSession> {
           otp: input.otp,
         });
         this.session = undefined;
-        return this.completeLoginWithinTransition({
+        if (
+          !input.merchantId &&
+          !resolveSingleMerchant(verification.merchants)
+        ) {
+          return {
+            status: "merchant-selection-required",
+            verification,
+            merchants: verification.merchants.map((merchant) => ({
+              ...merchant,
+            })),
+          };
+        }
+        const session = await this.completeLoginWithinTransition({
           verification,
           merchantId: input.merchantId,
           storeId: input.storeId,
         });
+        return { status: "complete", session };
       }),
     );
   }
@@ -393,9 +418,10 @@ export class ShopeeProvider implements MerchantProvider<ShopeeSession> {
         if (!target) {
           throw new ConfigError("Shopee merchant is not accessible", {
             merchantId,
-            availableMerchantIds: session.merchants.map(
-              (merchant) => merchant.id,
-            ),
+            availableMerchants: session.merchants.map((merchant) => ({
+              id: merchant.id,
+              name: merchant.name,
+            })),
           });
         }
         if (session.merchant.id === merchantId) {
@@ -672,7 +698,7 @@ export class ShopeeProvider implements MerchantProvider<ShopeeSession> {
   /**
    * The token that authenticates merchant/store/payment calls for the active
    * merchant. Selecting a merchant re-runs the login SSO exchange, which leaves
-   * that merchant's token in the dashboard cookie — so the cookie is always the
+   * that merchant's token in the dashboard cookie - so the cookie is always the
    * single source of truth, both after a switch and after a plain login.
    */
   private activeMerchantToken(): string {

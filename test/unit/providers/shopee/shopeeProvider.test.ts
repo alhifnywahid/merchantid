@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { ConfigError } from "../../../../src/core/errors.js";
-import { SHOPEE_LIVE_TOKEN_COOKIE } from "../../../../src/providers/shopee/constants.js";
+import {
+  SHOPEE_CLIENT_ID_COOKIE,
+  SHOPEE_LIVE_TOKEN_COOKIE,
+} from "../../../../src/providers/shopee/constants.js";
 import {
   ShopeeProvider,
   type ShopeeProviderConfig,
@@ -13,6 +16,7 @@ import {
   SHOPEE_MERCHANT_TWO_ID,
   SHOPEE_STORE_ONE_ID,
   SHOPEE_STORE_TWO_ID,
+  syntheticShopeeChallenge,
   syntheticShopeeSession,
 } from "../../../fixtures/shopee.js";
 
@@ -169,11 +173,11 @@ describe("ShopeeProvider.selectMerchant", () => {
    */
   function ssoSwitchReplies(): ReturnType<typeof jsonResponse>[] {
     return [
-      // followGet(token page) — a 200 ends the redirect chain.
+      // followGet(token page) - a 200 ends the redirect chain.
       jsonResponse(200, {}),
-      // login_toc — account envelope returning the one-time authorization code.
+      // login_toc - account envelope returning the one-time authorization code.
       jsonResponse(200, { error: 0, data: { nonce: "switch-auth-code" } }),
-      // followGet(tob/auth) — mints the target merchant's dashboard token cookie.
+      // followGet(tob/auth) - mints the target merchant's dashboard token cookie.
       jsonResponse(
         200,
         {},
@@ -181,7 +185,7 @@ describe("ShopeeProvider.selectMerchant", () => {
           "set-cookie": `${SHOPEE_LIVE_TOKEN_COOKIE}=${tokenLiveCookie("90002", SHOPEE_MERCHANT_TWO_ID)}; Path=/`,
         },
       ),
-      // GetUserInfo for the target merchant — partner envelope.
+      // GetUserInfo for the target merchant - partner envelope.
       jsonResponse(200, {
         errorCode: 0,
         data: {
@@ -195,7 +199,7 @@ describe("ShopeeProvider.selectMerchant", () => {
           shopeepay_service_status: 1,
         },
       }),
-      // get-store-list for the target merchant — payment envelope.
+      // get-store-list for the target merchant - payment envelope.
       jsonResponse(200, {
         code: 0,
         data: {
@@ -365,7 +369,7 @@ describe("ShopeeProvider.selectMerchant", () => {
   describe("refreshSession", () => {
     it("re-mints the active merchant token while the account session lives", async () => {
       const { fetch, requests } = scriptedFetch([
-        // login_status — the account session is still valid.
+        // login_status - the account session is still valid.
         jsonResponse(200, { error: 0, data: { userid: 90001 } }),
         // The SSO exchange re-runs for the *current* merchant.
         jsonResponse(200, {}), // token page
@@ -402,7 +406,7 @@ describe("ShopeeProvider.selectMerchant", () => {
 
     it("demands a new OTP once the account session is gone", async () => {
       const { fetch } = scriptedFetch([
-        // login_status — Shopee no longer recognises the account session.
+        // login_status - Shopee no longer recognises the account session.
         jsonResponse(200, { error: 48500102, error_msg: "not login" }),
       ]);
       const provider = new ShopeeProvider({
@@ -427,5 +431,230 @@ describe("ShopeeProvider.selectMerchant", () => {
         /log in again with an OTP/,
       );
     });
+  });
+});
+
+describe("ShopeeProvider.loginWithOtp", () => {
+  const LOGIN_TOKEN = "B:fresh-login-token";
+
+  /** Dashboard token cookie the SSO exchange sets for a merchant's staff user. */
+  function tokenLiveCookie(userid: string, businessId: string): string {
+    const header = Buffer.from(
+      JSON.stringify({ alg: "none", typ: "JWT" }),
+    ).toString("base64url");
+    const payload = Buffer.from(
+      JSON.stringify({
+        token: LOGIN_TOKEN,
+        userid,
+        businessId,
+        exp: Math.floor(Date.now() / 1_000) + 3_600,
+      }),
+    ).toString("base64url");
+    return `${header}.${payload}.sig`;
+  }
+
+  /**
+   * The account-session cookie `verifyOtp` reads for `spcClientId`. The device
+   * fingerprint and OTP path never touch the network in these tests - only the
+   * cookie jar - so a single deterministic client-id cookie is enough.
+   */
+  function challengeWithClientId() {
+    return syntheticShopeeChallenge([
+      {
+        name: SHOPEE_CLIENT_ID_COOKIE,
+        value: "synthetic-spc-clientid",
+        domain: "partner.business.accounts.shopee.co.id",
+        path: "/",
+        hostOnly: true,
+        secure: true,
+      },
+    ]);
+  }
+
+  /** One raw merchant row as the mer-detect endpoint returns it. */
+  function rawMerchant(
+    merchantId: string,
+    staffTobUid: number,
+    name: string,
+    isCurrentLoginUser = false,
+  ): Record<string, unknown> {
+    return {
+      merchantId: Number(merchantId),
+      merchantName: name,
+      merchantStatus: 1,
+      staffTobUid,
+      staffRole: 1,
+      staffStatus: 1,
+      isActive: true,
+      isBanned: false,
+      isCurrentLoginUser,
+    };
+  }
+
+  /**
+   * `verifyOtp` network sequence: verify_otp → authenticate_toc_by_otp →
+   * GET /account/login/auth → MerchantDetect. `merchantList` decides whether the
+   * account is ambiguous (two usable merchants, none flagged current).
+   */
+  function verifyOtpReplies(
+    merchantList: Record<string, unknown>[],
+  ): ReturnType<typeof jsonResponse>[] {
+    return [
+      jsonResponse(200, {
+        error: 0,
+        data: { otp_token: "synthetic-otp-token" },
+      }),
+      jsonResponse(200, {
+        error: 0,
+        data: {
+          toc_nonce: "synthetic-toc-nonce",
+          toc_account: { userid: 90001 },
+        },
+      }),
+      jsonResponse(200, {}), // followGet(/account/login/auth)
+      jsonResponse(200, {
+        errorCode: 0,
+        data: { selectMerchant: { merchantList } },
+      }),
+    ];
+  }
+
+  /**
+   * `completeLogin` network sequence once a merchant is chosen: GET token page →
+   * login_toc → GET tob/auth (mints the dashboard token) → GetUserInfo →
+   * get-store-list.
+   */
+  function completeLoginReplies(
+    merchantId: string,
+    staffUserId: string,
+    storeId: string,
+  ): ReturnType<typeof jsonResponse>[] {
+    return [
+      jsonResponse(200, {}), // followGet(token page)
+      jsonResponse(200, { error: 0, data: { nonce: "login-auth-code" } }),
+      jsonResponse(
+        200,
+        {},
+        {
+          "set-cookie": `${SHOPEE_LIVE_TOKEN_COOKIE}=${tokenLiveCookie(staffUserId, merchantId)}; Path=/`,
+        },
+      ),
+      jsonResponse(200, {
+        errorCode: 0,
+        data: {
+          merchantId: Number(merchantId),
+          merchantName: "MerchantId Dev Merchant North",
+          store_id: Number(storeId),
+          tobUserId: Number(staffUserId),
+          tocUid: Number(staffUserId),
+          userName: "Owner",
+          language: "id",
+          shopeepay_service_status: 1,
+        },
+      }),
+      jsonResponse(200, {
+        code: 0,
+        data: {
+          list: [
+            { storeId: Number(storeId), storeName: "North Outlet", status: 1 },
+          ],
+          storeCount: 1,
+        },
+      }),
+    ];
+  }
+
+  it("stops at merchant-selection-required for an ambiguous account with no merchantId", async () => {
+    const { fetch, requests } = scriptedFetch(
+      verifyOtpReplies([
+        rawMerchant(SHOPEE_MERCHANT_ID, 90001, "MerchantId Dev Merchant"),
+        rawMerchant(
+          SHOPEE_MERCHANT_TWO_ID,
+          90002,
+          "MerchantId Dev Merchant North",
+        ),
+      ]),
+    );
+    const provider = new ShopeeProvider({ fetch });
+
+    const outcome = await provider.loginWithOtp({
+      challenge: challengeWithClientId(),
+      otp: "123456",
+    });
+
+    expect(outcome.status).toBe("merchant-selection-required");
+    if (outcome.status !== "merchant-selection-required") return;
+    expect(outcome.merchants.map((merchant) => merchant.id)).toEqual([
+      SHOPEE_MERCHANT_ID,
+      SHOPEE_MERCHANT_TWO_ID,
+    ]);
+    // Nothing was authenticated: no store scope, and the login stopped after
+    // mer-detect without minting a merchant token.
+    expect(provider.authenticated).toBe(false);
+    expect(requests.some((request) => request.url.includes("/login_toc"))).toBe(
+      false,
+    );
+    // The returned verification finishes the login without a second OTP.
+    expect(outcome.verification.tocNonce).toBe("synthetic-toc-nonce");
+  });
+
+  it("completes the login directly when a merchantId disambiguates", async () => {
+    const { fetch } = scriptedFetch([
+      ...verifyOtpReplies([
+        rawMerchant(SHOPEE_MERCHANT_ID, 90001, "MerchantId Dev Merchant"),
+        rawMerchant(
+          SHOPEE_MERCHANT_TWO_ID,
+          90002,
+          "MerchantId Dev Merchant North",
+        ),
+      ]),
+      ...completeLoginReplies(
+        SHOPEE_MERCHANT_TWO_ID,
+        "90002",
+        SHOPEE_STORE_TWO_ID,
+      ),
+    ]);
+    const provider = new ShopeeProvider({ fetch });
+
+    const outcome = await provider.loginWithOtp({
+      challenge: challengeWithClientId(),
+      otp: "123456",
+      merchantId: SHOPEE_MERCHANT_TWO_ID,
+    });
+
+    expect(outcome.status).toBe("complete");
+    if (outcome.status !== "complete") return;
+    expect(outcome.session.merchant.id).toBe(SHOPEE_MERCHANT_TWO_ID);
+    expect(outcome.session.storeId).toBe(SHOPEE_STORE_TWO_ID);
+    expect(provider.authenticated).toBe(true);
+    expect(provider.activeMerchant?.id).toBe(SHOPEE_MERCHANT_TWO_ID);
+  });
+
+  it("completes the login without a merchantId when only one merchant is usable", async () => {
+    const { fetch } = scriptedFetch([
+      ...verifyOtpReplies([
+        rawMerchant(
+          SHOPEE_MERCHANT_TWO_ID,
+          90002,
+          "MerchantId Dev Merchant North",
+        ),
+      ]),
+      ...completeLoginReplies(
+        SHOPEE_MERCHANT_TWO_ID,
+        "90002",
+        SHOPEE_STORE_TWO_ID,
+      ),
+    ]);
+    const provider = new ShopeeProvider({ fetch });
+
+    const outcome = await provider.loginWithOtp({
+      challenge: challengeWithClientId(),
+      otp: "123456",
+    });
+
+    expect(outcome.status).toBe("complete");
+    if (outcome.status !== "complete") return;
+    expect(outcome.session.merchant.id).toBe(SHOPEE_MERCHANT_TWO_ID);
+    expect(provider.authenticated).toBe(true);
   });
 });

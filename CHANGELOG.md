@@ -10,11 +10,53 @@ contain breaking changes, and each one is listed under **Changed** or
 
 ## [Unreleased]
 
+### Changed
+
+- Shopee `loginWithOtp` no longer throws when the account can reach more than
+  one business merchant. It now returns a `ShopeeLoginOutcome`: `complete` with
+  the session when the merchant is unambiguous (a `merchantId` was supplied, or
+  only one merchant is usable), or `merchant-selection-required` carrying the
+  reusable `verification` and the accessible `merchants` so a caller can let a
+  human pick and finish with `completeLogin` - no second OTP. Callers that read
+  the returned session directly must switch on `outcome.status` first.
+
+### Improved
+
+- Shopee ambiguous-merchant and inaccessible-merchant errors now carry
+  `availableMerchants: { id, name }[]` instead of `availableMerchantIds:
+string[]`, so a caller can render a picker with merchant names rather than
+  bare ids.
+
+## [0.1.1] - 2026-08-11
+
+Renamed the package to `merchantid` and removed the manual cookie login path in
+favor of full OTP login. Publishing now runs on a pushed version tag through npm
+Trusted Publishing (OIDC), so every release from 0.1.1 on carries build
+provenance.
+
+> **Migrating from 0.1.0:** the package was renamed from `merchid` to
+> `merchantid`. Reinstall with `npm install merchantid` and change the CLI
+> command from `merchid` to `merchantid`.
+
+### Changed
+
+- Renamed the package from `merchid` to `merchantid`, including the CLI binary.
+- Publishing moved to npm Trusted Publishing (OIDC), triggered by a pushed
+  `v*` tag; the GitHub Release is created in the same job after a successful
+  publish, so a Release always means the version is live on npm.
+
+### Removed
+
+- Shopee manual cookie import (`importSession`). Shopee now authenticates only
+  through the OTP flow (phone + password, code delivered via WhatsApp, SMS, or
+  call). Pasting a browser session is no longer required or supported.
+
 ## [0.1.0] - 2026-08-09
 
-First public release. MerchantId turns a merchant's static QRIS into a unique
-per-order dynamic QRIS and reconciles settlement by polling the provider's own
-transaction feed — for GoPay Merchant (GoBiz) and ShopeePay Merchant.
+First public release, published under the name `merchid`. MerchID turns a
+merchant's static QRIS into a unique per-order dynamic QRIS and reconciles
+settlement by polling the provider's own transaction feed - for GoPay Merchant
+(GoBiz) and ShopeePay Merchant.
 
 ### Added
 
@@ -30,10 +72,11 @@ transaction feed — for GoPay Merchant (GoBiz) and ShopeePay Merchant.
   browser login, merchant and store discovery, merchant switching without a new
   OTP, silent session renewal while the account session is alive, and the
   transaction feed.
-- `merchantid` CLI for login, session inspection, merchant/store selection, and
+- CLI (`merchid`) for login, session inspection, merchant/store selection, and
   binding a static QRIS.
 - Zero runtime dependencies; ESM and CommonJS builds with type declarations for
   both.
 
-[unreleased]: https://github.com/alhifnywahid/merchantid/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/alhifnywahid/merchantid/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/alhifnywahid/merchantid/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/alhifnywahid/merchantid/releases/tag/v0.1.0

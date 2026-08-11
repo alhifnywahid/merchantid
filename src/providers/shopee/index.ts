@@ -27,6 +27,7 @@ export {
 export type {
   ShopeeCookie,
   ShopeeCompleteLoginInput,
+  ShopeeLoginOutcome,
   ShopeeLoginWithOtpInput,
   ShopeeMerchantProfile,
   ShopeeMerchantSummary,

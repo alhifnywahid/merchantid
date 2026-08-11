@@ -118,7 +118,7 @@ export interface ShopeeSession {
    * Account-session material captured at login so the active merchant can be
    * changed without a second OTP. Switching re-runs the login token exchange
    * (`login_toc` → `/account/login/tob/auth`) for the target merchant's staff
-   * user id — the same chain a fresh login uses — which mints a dashboard token
+   * user id - the same chain a fresh login uses - which mints a dashboard token
    * the API accepts. Absent on sessions created before switch support (or
    * imported via a raw token cookie), which therefore cannot switch and must
    * log in again. Sensitive: persisted alongside the equally sensitive cookies.
@@ -151,3 +151,18 @@ export interface ShopeeLoginWithOtpInput {
   merchantId?: string;
   storeId?: string;
 }
+
+/**
+ * Result of {@link ShopeeProvider.loginWithOtp}. When the account can reach more
+ * than one business merchant and no `merchantId` was supplied, the login stops
+ * at `merchant-selection-required` and hands back the sensitive `verification`
+ * plus the usable `merchants`, so a caller can let a human pick and then finish
+ * with {@link ShopeeProvider.completeLogin} - no second OTP required.
+ */
+export type ShopeeLoginOutcome =
+  | { status: "complete"; session: ShopeeSession }
+  | {
+      status: "merchant-selection-required";
+      verification: ShopeeOtpVerification;
+      merchants: ShopeeMerchantSummary[];
+    };

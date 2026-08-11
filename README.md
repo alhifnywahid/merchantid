@@ -174,6 +174,19 @@ await saveSecret("shopee-session", session);
 
 `ShopeeOtpChallenge`, `ShopeeOtpVerification`, dan `ShopeeSession` berisi cookie atau state autentikasi sensitif. Jangan mengirim objek tersebut ke browser, mencetaknya ke log, atau menyimpannya sebagai fixture.
 
+`loginWithOtp` menggabungkan langkah 2 dan 3 dalam satu panggilan. Ia mengembalikan `ShopeeLoginOutcome`: `complete` dengan sesi ketika merchant tidak ambigu (`merchantId` diberikan, atau hanya satu merchant yang dapat dipakai), atau `merchant-selection-required` yang membawa `verification` dan daftar `merchants` sehingga sebuah picker dapat ditampilkan lalu diselesaikan dengan `completeLogin` - tanpa OTP kedua.
+
+```ts
+const outcome = await shopee.loginWithOtp({ challenge, otp: otpFromUser });
+if (outcome.status === "merchant-selection-required") {
+  const chosen = await askUserToPick(outcome.merchants); // { id, name }[]
+  await shopee.completeLogin({
+    verification: outcome.verification,
+    merchantId: chosen.id,
+  });
+}
+```
+
 Untuk memulihkan sesi beserta QRIS yang sudah diikat ke merchant/store:
 
 ```ts
@@ -193,7 +206,7 @@ Shopee menilai laporan device-risk sebelum benar-benar mengirim OTP. Bila lapora
 const shopee = new ShopeeProvider({ deviceReport: reportFromYourBrowser });
 ```
 
-Tangkap laporan dari browser Anda sendiri. Paket ini juga mengekspor `SHOPEE_DEVICE_RISK_BLOB`, sebuah laporan hasil tangkapan satu mesin — memakainya berarti setiap pengguna melapor sebagai device yang sama, yang dapat ditautkan Shopee dan dapat diblokir sekaligus untuk semua orang. Lihat [Penafian](#penafian).
+Tangkap laporan dari browser Anda sendiri. Paket ini juga mengekspor `SHOPEE_DEVICE_RISK_BLOB`, sebuah laporan hasil tangkapan satu mesin - memakainya berarti setiap pengguna melapor sebagai device yang sama, yang dapat ditautkan Shopee dan dapat diblokir sekaligus untuk semua orang. Lihat [Penafian](#penafian).
 
 #### Ganti merchant tanpa OTP baru
 
@@ -502,7 +515,7 @@ parseEmv(dynamic).get("54"); // "10001"
 | Vercel Edge, Deno, Bun | Belum diuji      | Scheduler platform memanggil `tick()`          |
 | Browser                | Tidak dianjurkan | Jangan tempatkan kredensial merchant di client |
 
-CI menjalankan Node 18 dan 24 di Linux serta Node 24 di Windows. Runtime lain **diharapkan** bekerja tetapi belum diverifikasi: core dan API publik tidak mengimpor satu pun Node builtin — kriptografi memakai `globalThis.crypto` dengan fallback, dan `node:fs`, `node:os`, `node:path`, serta `node:readline/promises` hanya dipakai CLI. Laporkan lewat issue bila menemukan yang sebaliknya.
+CI menjalankan Node 18 dan 24 di Linux serta Node 24 di Windows. Runtime lain **diharapkan** bekerja tetapi belum diverifikasi: core dan API publik tidak mengimpor satu pun Node builtin - kriptografi memakai `globalThis.crypto` dengan fallback, dan `node:fs`, `node:os`, `node:path`, serta `node:readline/promises` hanya dipakai CLI. Laporkan lewat issue bila menemukan yang sebaliknya.
 
 ## Arsitektur
 
@@ -560,7 +573,7 @@ Lihat [CONTRIBUTING.md](CONTRIBUTING.md) untuk aturan kontribusi dan [AGENTS.md]
 
 Tidak berafiliasi dengan, didukung oleh, atau disponsori oleh Gojek, GoTo, Shopee, maupun Sea Group. Dibuat untuk keperluan edukasi dan integrasi personal dengan akun merchant milik sendiri.
 
-**Risiko ditanggung pengguna.** Library ini memakai endpoint privat yang tidak berdokumentasi. Memakainya dapat melanggar ketentuan layanan provider, dan provider dapat membatasi laju, menangguhkan, atau menutup akun merchant yang mengaksesnya secara otomatis — termasuk akun Anda sendiri. Baca ketentuan layanan provider dan putuskan sendiri. Perangkat lunak ini disediakan "sebagaimana adanya", tanpa jaminan apa pun; seluruh risiko dan tanggung jawab atas penggunaannya ada pada Anda (lihat [LICENSE](LICENSE)).
+**Risiko ditanggung pengguna.** Library ini memakai endpoint privat yang tidak berdokumentasi. Memakainya dapat melanggar ketentuan layanan provider, dan provider dapat membatasi laju, menangguhkan, atau menutup akun merchant yang mengaksesnya secara otomatis - termasuk akun Anda sendiri. Baca ketentuan layanan provider dan putuskan sendiri. Perangkat lunak ini disediakan "sebagaimana adanya", tanpa jaminan apa pun; seluruh risiko dan tanggung jawab atas penggunaannya ada pada Anda (lihat [LICENSE](LICENSE)).
 
 Perhatian khusus pada `SHOPEE_DEVICE_RISK_BLOB`: konstanta itu adalah laporan device-risk hasil tangkapan satu mesin. Memakainya berarti melaporkan identitas device yang bukan milik Anda kepada sistem anti-fraud Shopee, yang secara substansi adalah menyiasati kontrol tersebut. Tangkap laporan dari browser Anda sendiri.
 

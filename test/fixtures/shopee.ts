@@ -1,5 +1,7 @@
 import { SHOPEE_LIVE_TOKEN_COOKIE } from "../../src/providers/shopee/constants.js";
 import type {
+  ShopeeCookie,
+  ShopeeOtpChallenge,
   ShopeeSession,
   ShopeeStore,
 } from "../../src/providers/shopee/types.js";
@@ -83,6 +85,26 @@ export function syntheticShopeeSession(
     storeId,
     createdAt: Date.now(),
     expiresAt: Date.now() + 3_600_000,
+  };
+}
+
+/**
+ * A synthetic post-OTP challenge for driving `verifyOtp`/`loginWithOtp` in
+ * tests. Only deterministic placeholder values; no captured session material.
+ */
+export function syntheticShopeeChallenge(
+  cookies: readonly ShopeeCookie[] = [],
+): ShopeeOtpChallenge {
+  return {
+    version: 1,
+    phoneNumber: "6281234567890",
+    channel: 3,
+    availableChannels: [3, 1, 2],
+    deviceFingerprint: "synthetic-device-fingerprint",
+    riskToken: "synthetic-risk-token",
+    hasPassword: true,
+    cookies: cookies.map((cookie) => ({ ...cookie })),
+    requestedAt: Date.now(),
   };
 }
 

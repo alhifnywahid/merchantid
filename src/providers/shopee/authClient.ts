@@ -510,7 +510,7 @@ export class ShopeeAuthClient {
 
     const credential = readShopeeMerchantCredential(this.http.cookieJar);
     // The dashboard token identifies the staff (ToB) user it was minted for,
-    // which is the `tob_userid` posted to `login_toc` — i.e. the selected
+    // which is the `tob_userid` posted to `login_toc` - i.e. the selected
     // merchant's `staffUserId`. The token's `businessId` is the SSO
     // business_client_id (a constant `1`), never the Shopee merchant id, so it
     // must not be used to validate the merchant.
@@ -581,7 +581,7 @@ export class ShopeeAuthClient {
    * The passport SPA posts the phone and password hash to this endpoint before
    * authenticating, purely as a lookup. The reference capture answers
    * `48401004` here yet still proceeds to `authenticate_toc_by_password`, so a
-   * non-zero envelope is expected and must not abort the flow — only a
+   * non-zero envelope is expected and must not abort the flow - only a
    * transport failure does. Sending the phone alone (no password) returns
    * `10002` (invalid params), which is why this must mirror the browser body.
    */
@@ -606,7 +606,7 @@ export class ShopeeAuthClient {
 
   /**
    * Password-protected accounts only receive an OTP after this step accepts
-   * the password — the reference capture answers `48401102` (NeedOTP), which
+   * the password - the reference capture answers `48401102` (NeedOTP), which
    * here counts as success. Skipping it leaves `send_otp` reporting success
    * while Shopee silently suppresses the delivery. Accounts without a
    * password skip the second factor entirely (`error:0`).
@@ -680,22 +680,49 @@ function selectMerchant(
     if (!selected) {
       throw new ConfigError("Configured Shopee merchantId is not accessible", {
         merchantId: requestedId,
-        availableMerchantIds: merchants.map((merchant) => merchant.id),
+        availableMerchants: merchants.map((merchant) => ({
+          id: merchant.id,
+          name: merchant.name,
+        })),
       });
     }
     return selected;
   }
 
-  const usable = merchants.filter(
-    (merchant) => merchant.isActive && !merchant.isBanned,
-  );
-  const current = usable.filter((merchant) => merchant.isCurrentLoginUser);
-  if (current.length === 1) return current[0]!;
-  if (usable.length === 1) return usable[0]!;
+  const resolved = resolveSingleMerchant(merchants);
+  if (resolved) return resolved;
+  const usable = usableMerchants(merchants);
   throw new ConfigError(
     "merchantId is required when multiple Shopee merchants are accessible",
     {
-      availableMerchantIds: usable.map((merchant) => merchant.id),
+      availableMerchants: usable.map((merchant) => ({
+        id: merchant.id,
+        name: merchant.name,
+      })),
     },
   );
+}
+
+/** Merchants a login can actually select: active and not banned. */
+export function usableMerchants(
+  merchants: readonly ShopeeMerchantSummary[],
+): ShopeeMerchantSummary[] {
+  return merchants.filter(
+    (merchant) => merchant.isActive && !merchant.isBanned,
+  );
+}
+
+/**
+ * The single merchant a login can pick without a human, or `undefined` when the
+ * choice is ambiguous. Mirrors {@link selectMerchant}'s no-`requestedId` branch
+ * so callers can detect ambiguity before committing to a login.
+ */
+export function resolveSingleMerchant(
+  merchants: readonly ShopeeMerchantSummary[],
+): ShopeeMerchantSummary | undefined {
+  const usable = usableMerchants(merchants);
+  const current = usable.filter((merchant) => merchant.isCurrentLoginUser);
+  if (current.length === 1) return current[0]!;
+  if (usable.length === 1) return usable[0]!;
+  return undefined;
 }
