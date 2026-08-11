@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.output/
+.nitro/
+.tanstack/
+.vite/
+
+# Real provider credentials — never commit
+data/
+*session*.json
+lab-state.json
+payments.json
+console-state.json
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log

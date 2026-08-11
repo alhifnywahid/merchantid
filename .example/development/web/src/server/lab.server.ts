@@ -658,32 +658,6 @@ export class LabRuntime {
     });
   }
 
-  async importShopeeSession(token: string): Promise<ActionResult> {
-    return this.runExclusive(async () => {
-      const provider = new ShopeeProvider({
-        store: this.store,
-        logger: this.createLogger("shopee"),
-        onSessionUpdated: async (session) => {
-          const nextState = structuredClone(this.state);
-          nextState.shopee = { session };
-          await this.commitState(nextState);
-          this.shopeeProvider = provider;
-        },
-      });
-      await provider.importSession(token);
-      this.shopeeProvider = provider;
-      this.pendingAuth = undefined;
-      this.restoreProviders();
-      await this.record(
-        "success",
-        "Shopee session imported",
-        "Sesi dari login resmi Shopee dipakai. Discovery, feed, dan rekonsiliasi kini aktif tanpa OTP.",
-        "shopee",
-      );
-      return this.result(await this.snapshot(), "Sesi Shopee berhasil diimpor");
-    });
-  }
-
   async refreshDiscovery(providerId: ProviderId): Promise<ActionResult> {
     return this.runExclusive(async () => {
       if (providerId === "gopay") {

@@ -7,7 +7,6 @@ import type {
 } from "../lib/lab-types";
 import {
   completeShopeeLogin,
-  importShopeeSession,
   logoutProvider,
   refreshDiscovery,
   refreshProviderSession,
@@ -26,7 +25,6 @@ import {
   MetaList,
   Select,
   Stepper,
-  TextArea,
   TextInput,
   formatDateTime,
   shortId,
@@ -74,7 +72,6 @@ function LoginCard({ provider, pendingAction, runAction }: ProviderAccessProps) 
   const [phoneNumber, setPhoneNumber] = useState("");
   const [channel, setChannel] = useState("");
   const [password, setPassword] = useState("");
-  const [importToken, setImportToken] = useState("");
   const [otp, setOtp] = useState("");
   const [merchantId, setMerchantId] = useState("");
   const [storeId, setStoreId] = useState("");
@@ -112,16 +109,6 @@ function LoginCard({ provider, pendingAction, runAction }: ProviderAccessProps) 
       "OTP terverifikasi",
     );
     if (ok) setOtp("");
-  };
-
-  const handleImportShopee = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const ok = await runAction(
-      "import-shopee-session",
-      () => importShopeeSession({ data: { token: importToken.trim() } }),
-      "Sesi diimpor",
-    );
-    if (ok) setImportToken("");
   };
 
   const handleCompleteLogin = async (event: FormEvent<HTMLFormElement>) => {
@@ -214,47 +201,6 @@ function LoginCard({ provider, pendingAction, runAction }: ProviderAccessProps) 
                 </Button>
               </div>
             </form>
-
-            {isShopee ? (
-              <details className="disclosure">
-                <summary>
-                  <span>Impor sesi tanpa OTP</span>
-                  <span className="disclosure__marker" aria-hidden="true">
-                    +
-                  </span>
-                </summary>
-                <form
-                  className="form disclosure__body"
-                  onSubmit={(event) => void handleImportShopee(event)}
-                >
-                  <Field
-                    label="Cookie sesi"
-                    hint="partner.shopee.co.id → DevTools → Cookies → __shopee_partner_website_x_token_live"
-                  >
-                    <TextArea
-                      value={importToken}
-                      onChange={(event) => setImportToken(event.target.value)}
-                      rows={3}
-                      placeholder="Tempel nilai cookie"
-                      minLength={20}
-                      maxLength={8192}
-                      autoComplete="off"
-                      spellCheck={false}
-                    />
-                  </Field>
-                  <div className="form__footer">
-                    <Button
-                      type="submit"
-                      tone="outline"
-                      busy={pendingAction === "import-shopee-session"}
-                      disabled={busy || importToken.trim().length < 20}
-                    >
-                      Impor
-                    </Button>
-                  </div>
-                </form>
-              </details>
-            ) : null}
           </>
         ) : null}
 

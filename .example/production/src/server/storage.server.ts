@@ -1,0 +1,247 @@
+import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { samePaymentScope } from "merchantid";
+import type {
+  Payment,
+  PaymentScope,
+  PaymentStore,
+  SessionState,
+  ShopeeSession,
+  ShopeeStaticQrisScope,
+} from "merchantid";
+import type { ActivityView, ProviderId } from "@/lib/types";
+
+// Anchored to this file, not process.cwd(): deriving the path from the working
+// directory would write real provider credentials wherever the server happens
+// to be launched from. `.example/production/data/` is covered by this app's
+// .gitignore, so credentials stay out of git regardless of launch directory.
+const APP_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const DATA_DIRECTORY = process.env.MERCHANTID_CONSOLE_DATA_DIR
+  ? resolve(process.env.MERCHANTID_CONSOLE_DATA_DIR)
+  : resolve(APP_ROOT, "data");
+const STATE_FILE = resolve(DATA_DIRECTORY, "console-state.json");
+const PAYMENT_FILE = resolve(DATA_DIRECTORY, "payments.json");
+
+export interface StoredGopayMerchant {
+  id: string;
+  label: string;
+  detail?: string;
+  staticQris?: string;
+}
+
+export interface StoredGopayState {
+  session?: SessionState;
+  merchants: StoredGopayMerchant[];
+  selectedMerchantId?: string;
+  staticQris?: string;
+}
+
+export interface StoredShopeeState {
+  session?: ShopeeSession;
+  staticQris?: string;
+  staticQrisScope?: ShopeeStaticQrisScope;
+}
+
+export interface StoredConsoleState {
+  version: 1;
+  activeProviderId: ProviderId;
+  gopay: StoredGopayState;
+  shopee: StoredShopeeState;
+  activity: ActivityView[];
+  startedAt: number;
+}
+
+export function createDefaultState(): StoredConsoleState {
+  return {
+    version: 1,
+    activeProviderId: "gopay",
+    gopay: { merchants: [] },
+    shopee: {},
+    activity: [],
+    startedAt: Date.now(),
+  };
+}
+
+async function readJson<T>(path: string, fallback: T): Promise<T> {
+  try {
+    return JSON.parse(await readFile(path, "utf8")) as T;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return fallback;
+    throw error;
+  }
+}
+
+async function writeJson(path: string, value: unknown): Promise<void> {
+  await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+  const temporary = `${path}.${process.pid}.tmp`;
+  try {
+    await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, {
+      encoding: "utf8",
+      mode: 0o600,
+    });
+    await rename(temporary, path);
+  } finally {
+    await rm(temporary, { force: true });
+  }
+}
+
+export async function loadConsoleState(): Promise<StoredConsoleState> {
+  const parsed = await readJson<
+    (Partial<StoredConsoleState> & { version?: unknown }) | undefined
+  >(STATE_FILE, undefined);
+  if (!parsed) return createDefaultState();
+  if (parsed.version !== 1) {
+    await resetStoredConsole();
+    return createDefaultState();
+  }
+
+  const defaults = createDefaultState();
+  return {
+    version: 1,
+    activeProviderId: parsed.activeProviderId === "shopee" ? "shopee" : "gopay",
+    gopay: {
+      ...(parsed.gopay ?? defaults.gopay),
+      merchants: Array.isArray(parsed.gopay?.merchants)
+        ? parsed.gopay.merchants
+        : [],
+    },
+    shopee: { ...(parsed.shopee ?? defaults.shopee) },
+    activity: Array.isArray(parsed.activity) ? parsed.activity.slice(-60) : [],
+    startedAt:
+      Number.isFinite(parsed.startedAt) && (parsed.startedAt ?? 0) > 0
+        ? (parsed.startedAt as number)
+        : defaults.startedAt,
+  };
+}
+
+let stateWriteQueue: Promise<void> = Promise.resolve();
+
+export function saveConsoleState(state: StoredConsoleState): Promise<void> {
+  const snapshot = structuredClone(state);
+  const result = stateWriteQueue.then(() => writeJson(STATE_FILE, snapshot));
+  stateWriteQueue = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
+
+function clonePayment(payment: Payment): Payment {
+  return {
+    ...payment,
+    scope: payment.scope ? { ...payment.scope } : undefined,
+    transaction: payment.transaction
+      ? { ...payment.transaction, raw: undefined }
+      : undefined,
+    metadata: payment.metadata ? { ...payment.metadata } : undefined,
+  };
+}
+
+/** Single-process JSON store backing the console. */
+export class JsonPaymentStore implements PaymentStore {
+  private readonly payments = new Map<string, Payment>();
+  private loaded = false;
+  private loadPromise?: Promise<void>;
+  private mutationQueue: Promise<void> = Promise.resolve();
+
+  private ensureLoaded(): Promise<void> {
+    if (this.loaded) return Promise.resolve();
+    this.loadPromise ??= readJson<Payment[]>(PAYMENT_FILE, [])
+      .then((stored) => {
+        for (const payment of stored) {
+          this.payments.set(payment.id, clonePayment(payment));
+        }
+        this.loaded = true;
+      })
+      .catch((error: unknown) => {
+        this.loadPromise = undefined;
+        throw error;
+      });
+    return this.loadPromise;
+  }
+
+  private runMutation(
+    mutate: (payments: Map<string, Payment>) => void,
+  ): Promise<void> {
+    const result = this.mutationQueue.then(async () => {
+      await this.ensureLoaded();
+      const candidate = new Map(
+        [...this.payments].map(([id, payment]) => [id, clonePayment(payment)]),
+      );
+      mutate(candidate);
+      await writeJson(PAYMENT_FILE, [...candidate.values()].map(clonePayment));
+      this.payments.clear();
+      for (const [id, payment] of candidate) {
+        this.payments.set(id, clonePayment(payment));
+      }
+    });
+    this.mutationQueue = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  }
+
+  private async waitForStableState(): Promise<void> {
+    await this.ensureLoaded();
+    await this.mutationQueue;
+  }
+
+  create(payment: Payment): Promise<void> {
+    return this.runMutation((payments) => {
+      payments.set(payment.id, clonePayment(payment));
+    });
+  }
+
+  update(payment: Payment): Promise<void> {
+    return this.runMutation((payments) => {
+      payments.set(payment.id, clonePayment(payment));
+    });
+  }
+
+  async get(id: string): Promise<Payment | undefined> {
+    await this.waitForStableState();
+    const payment = this.payments.get(id);
+    return payment ? clonePayment(payment) : undefined;
+  }
+
+  async listActive(scope?: PaymentScope): Promise<Payment[]> {
+    await this.waitForStableState();
+    return [...this.payments.values()]
+      .filter(
+        (payment) =>
+          payment.status === "pending" &&
+          (!scope ||
+            (payment.scope !== undefined &&
+              samePaymentScope(payment.scope, scope))),
+      )
+      .map(clonePayment);
+  }
+
+  async all(): Promise<Payment[]> {
+    await this.waitForStableState();
+    return [...this.payments.values()]
+      .map(clonePayment)
+      .sort((left, right) => right.createdAt - left.createdAt);
+  }
+
+  removeProvider(providerId: ProviderId): Promise<void> {
+    return this.runMutation((payments) => {
+      for (const [id, payment] of payments) {
+        if (payment.scope?.provider === providerId) payments.delete(id);
+      }
+    });
+  }
+
+  clear(): Promise<void> {
+    return this.runMutation((payments) => payments.clear());
+  }
+}
+
+export async function resetStoredConsole(): Promise<void> {
+  await rm(STATE_FILE, { force: true });
+  await rm(PAYMENT_FILE, { force: true });
+}
+
+export const storageLabel = "./data (gitignored)";

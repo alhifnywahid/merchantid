@@ -46,12 +46,6 @@ export const completeShopeeLogin = createServerFn({ method: "POST" })
     runLabAction((runtime) => runtime.completeShopeeLogin(data)),
   );
 
-export const importShopeeSession = createServerFn({ method: "POST" })
-  .validator(z.object({ token: z.string().trim().min(20).max(8_192) }))
-  .handler(({ data }) =>
-    runLabAction((runtime) => runtime.importShopeeSession(data.token)),
-  );
-
 export const refreshDiscovery = createServerFn({ method: "POST" })
   .validator(z.object({ providerId }))
   .handler(({ data }) =>
