@@ -9,11 +9,23 @@ updates:
       interval: monthly
     open-pull-requests-limit: 5
     groups:
+      # Only minor and patch bumps travel together. Majors are deliberately
+      # left out of the group so each arrives as its own pull request.
+      #
+      # Grouping everything once cost seven updates at a stroke: a single
+      # proposal raised `typescript` to 7.x while `typescript-eslint` still
+      # peer-depends on `<6.1.0`, so `npm ci` failed with ERESOLVE before one
+      # test could run, and the six unrelated bumps in the same branch were
+      # unmergeable with it. Split this way, a major that no longer fits the
+      # toolchain fails alone and stays reviewable on its own merits.
       dev-dependencies:
         patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   # Workflow actions are pinned by SHA, so this is the only thing that moves
-  # them forward when an upstream security fix lands.
+  # them forward when an upstream security fix lands. Left ungrouped on
+  # purpose: one action whose major breaks the workflow must not hold back a
+  # security fix to another.
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
